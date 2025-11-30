@@ -1,6 +1,7 @@
 import './App.css'
 import { useAuth } from './AuthContext';
 import AuthForm from './AuthForm';
+import Bookshelf from './Bookshelf';
 
 function App() {
   const { user, loading, logout } = useAuth();
@@ -27,10 +28,7 @@ function App() {
       </header>
       <main>
         <p className="subtitle">Welcome, {user.email}! Add footprints everywhere you go!</p>
-        {/* Main app content will go here */}
-        <div className="main-content">
-          <p>Your app content here...</p>
-        </div>
+        <Bookshelf />
       </main>
     </div>
   );
