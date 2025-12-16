@@ -6,7 +6,6 @@ import {
   addDoc,
   getDocs,
   doc,
-  deleteDoc,
   query,
   where,
   writeBatch
@@ -95,14 +94,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({ onJournalClick }) => {
     }
   };
 
-  const deleteJournal = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'journals', id));
-      setJournals(journals.filter(journal => journal.id !== id));
-    } catch (error) {
-      console.error('Error deleting journal:', error);
-    }
-  };
+
 
   const toggleEditMode = () => {
     setIsEditMode(!isEditMode);

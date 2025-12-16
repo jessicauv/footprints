@@ -29,9 +29,6 @@ interface DraggableItem {
 const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose, onRestart, restaurant }) => {
   const [canvasItems, setCanvasItems] = useState<DraggableItem[]>([]);
   const [draggedItem, setDraggedItem] = useState<DraggableItem | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isJournalShared, setIsJournalShared] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const hasLoadedRef = useRef(false);
@@ -55,8 +52,6 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
         hasLoadedRef.current = true;
       } catch (error) {
         console.error('Error loading page content:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -108,7 +103,6 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
 
   const handleDragStart = (item: Omit<DraggableItem, 'x' | 'y'>) => {
     setDraggedItem({ ...item, x: 0, y: 0 });
-    setIsDragging(true);
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
@@ -127,14 +121,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
       setCanvasItems([...canvasItems, newItem]);
     }
     setDraggedItem(null);
-    setIsDragging(false);
   };
 
-  const handleItemMove = (id: string, x: number, y: number) => {
-    setCanvasItems(items =>
-      items.map(item => item.id === id ? { ...item, x, y } : item)
-    );
-  };
+
 
   const deleteItem = (id: string) => {
     setCanvasItems(items => items.filter(item => item.id !== id));
@@ -192,7 +181,6 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
           isPublic: true,
           sharedAt: new Date()
         });
-        setIsJournalShared(true);
       }
 
       // Generate share link for this specific page
