@@ -1,10 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read/write their own journal documents
+    // Allow authenticated users to create journals, and owners to read/write their own journals
     // Allow public read access for shared journals
     match /journals/{journalId} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
       allow read: if resource.data.isPublic == true;
     }
 
