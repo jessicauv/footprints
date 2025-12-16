@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase';
-import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import html2canvas from 'html2canvas';
 
 interface PageEditorProps {
   journal: {
@@ -30,6 +31,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
   const [draggedItem, setDraggedItem] = useState<DraggableItem | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isJournalShared, setIsJournalShared] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);
+  const [shareLink, setShareLink] = useState('');
   const hasLoadedRef = useRef(false);
 
   // Load page content from Firestore
@@ -62,9 +66,13 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
   // Save page content to Firestore
   const savePageContent = async (items: DraggableItem[]) => {
     try {
+      // Capture canvas as image
+      const canvasImage = await captureCanvas();
+
       const pageRef = doc(db, 'journals', journal.id, 'pages', `page-${pageId}`);
       const pageData: any = {
         items,
+        canvasImage, // Save the captured image
         lastModified: new Date()
       };
 
@@ -132,6 +140,27 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
     setCanvasItems(items => items.filter(item => item.id !== id));
   };
 
+  // Capture canvas as image
+  const captureCanvas = async (): Promise<string | null> => {
+    const canvasElement = document.querySelector('.canvas-paper') as HTMLElement;
+    if (!canvasElement) return null;
+
+    try {
+      const canvas = await html2canvas(canvasElement, {
+        backgroundColor: 'white',
+        scale: 2, // Higher quality
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      const dataUrl = canvas.toDataURL('image/png');
+      return dataUrl;
+    } catch (error) {
+      console.error('Error capturing canvas:', error);
+      return null;
+    }
+  };
+
   const handleRestart = async () => {
     try {
       // Delete the page data from Firestore
@@ -141,6 +170,47 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
       onRestart();
     } catch (error) {
       console.error('Error deleting page data:', error);
+    }
+  };
+
+  // Share this page
+  const sharePage = async () => {
+    try {
+      // Share the journal if it's not already shared (required for page access)
+      const journalRef = doc(db, 'journals', journal.id);
+      const journalSnap = await getDoc(journalRef);
+
+      let journalShared = false;
+      if (journalSnap.exists()) {
+        const data = journalSnap.data();
+        journalShared = data.isPublic || false;
+      }
+
+      // If journal is not shared, share it first
+      if (!journalShared) {
+        await updateDoc(journalRef, {
+          isPublic: true,
+          sharedAt: new Date()
+        });
+        setIsJournalShared(true);
+      }
+
+      // Generate share link for this specific page
+      const currentDomain = window.location.origin;
+      const link = `${currentDomain}/shared/journal/${journal.id}/page/${pageId}`;
+      setShareLink(link);
+      setShowShareOptions(true);
+    } catch (error) {
+      console.error('Error sharing page:', error);
+    }
+  };
+
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      // Could add a toast notification here
+    } catch (error) {
+      console.error('Error copying link:', error);
     }
   };
 
@@ -161,6 +231,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
             )}
           </div>
           <div className="editor-actions">
+            <button onClick={sharePage} className="share-page-btn">
+              📤 Share Page
+            </button>
             <button onClick={handleRestart} className="restart-btn">
               Change Restaurant
             </button>
@@ -215,6 +288,29 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
             </div>
           </div>
         </div>
+
+        {showShareOptions && (
+          <div className="share-options">
+            <p>Share this page of your journal:</p>
+            <div className="share-link-container">
+              <input
+                type="text"
+                value={shareLink}
+                readOnly
+                className="share-link-input"
+              />
+              <button onClick={copyShareLink} className="copy-link-btn">
+                Copy Link
+              </button>
+            </div>
+            <button
+              onClick={() => setShowShareOptions(false)}
+              className="close-share-options"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         <div className="editor-footer">
           <p>Double-click items to delete them. Drag from sidebar to add.</p>

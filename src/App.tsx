@@ -5,7 +5,10 @@ import Bookshelf from './Bookshelf';
 import BookViewer from './BookViewer';
 import PageEditor from './PageEditor';
 import RestaurantSelector from './RestaurantSelector';
+
+import SharedPageViewer from './SharedPageViewer';
 import { useState } from 'react';
+import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 
 interface Journal {
   id: string;
@@ -15,7 +18,8 @@ interface Journal {
   color?: string;
 }
 
-function App() {
+// Main App Content Component (requires authentication)
+function MainApp() {
   const { user, loading, logout } = useAuth();
   const [selectedJournal, setSelectedJournal] = useState<Journal | null>(null);
   const [selectedPage, setSelectedPage] = useState<number | null>(null);
@@ -102,6 +106,33 @@ function App() {
         )}
       </main>
     </div>
+  );
+}
+
+// Shared Page Component (no authentication required)
+function SharedPage() {
+  const { id, pageId } = useParams<{ id: string; pageId: string }>();
+  const navigate = useNavigate();
+
+  if (!id || !pageId) {
+    return <Navigate to="/" replace />;
+  }
+
+  const pageNumber = parseInt(pageId);
+  if (isNaN(pageNumber)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <SharedPageViewer journalId={id} pageId={pageNumber} onClose={() => navigate('/')} />;
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/shared/journal/:id/page/:pageId" element={<SharedPage />} />
+      <Route path="/" element={<MainApp />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

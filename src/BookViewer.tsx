@@ -89,6 +89,7 @@ const BookViewer: React.FC<BookViewerProps> = ({ journal, onClose, onPageClick }
                 <div className="page-content-preview">
                   {page.content.length > 50 ? `${page.content.substring(0, 50)}...` : page.content}
                 </div>
+
               </div>
               <div className="page-label">{page.title}</div>
             </div>
