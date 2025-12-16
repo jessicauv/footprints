@@ -20,7 +20,11 @@ interface Journal {
   color?: string;
 }
 
-const Bookshelf: React.FC = () => {
+interface BookshelfProps {
+  onJournalClick: (journal: Journal) => void;
+}
+
+const Bookshelf: React.FC<BookshelfProps> = ({ onJournalClick }) => {
   const { user } = useAuth();
   const [journals, setJournals] = useState<Journal[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -227,10 +231,10 @@ const Bookshelf: React.FC = () => {
               <div
                 key={journal.id}
                 className={`book-front ${isEditMode ? 'edit-mode' : ''} ${selectedJournals.has(journal.id) ? 'selected' : ''}`}
-                onClick={() => isEditMode ? toggleJournalSelection(journal.id) : null}
+                onClick={() => isEditMode ? toggleJournalSelection(journal.id) : onJournalClick(journal)}
                 style={{
                   backgroundColor: journal.color || '#8B4513',
-                  cursor: isEditMode ? 'pointer' : 'default',
+                  cursor: isEditMode ? 'pointer' : 'pointer',
                 }}
               >
                 <div className="book-spine-front"></div>

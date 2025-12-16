@@ -4,7 +4,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDECX0s5IsIIunBDWYJITJO5yD1dTXsqxk",
+  apiKey: "AIzaSyDECX0s5IsIIunBDWYJITJO5yD1dTXsqxk", //Not a secret API key
   authDomain: "footprints-b8d5f.firebaseapp.com",
   projectId: "footprints-b8d5f",
   storageBucket: "footprints-b8d5f.firebasestorage.app",

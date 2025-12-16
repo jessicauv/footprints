@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import HTMLFlipBook from 'react-pageflip';
+import React, { useState, useEffect } from 'react';
+import { db } from './firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 interface Journal {
   id: string;
@@ -12,86 +13,66 @@ interface Journal {
 interface BookViewerProps {
   journal: Journal;
   onClose: () => void;
+  onPageClick: (pageId: number) => void;
 }
 
-const BookViewer: React.FC<BookViewerProps> = ({ journal, onClose }) => {
-  const [currentPage, setCurrentPage] = useState(0);
+const BookViewer: React.FC<BookViewerProps> = ({ journal, onClose, onPageClick }) => {
+  const [pageContentStatus, setPageContentStatus] = useState<Record<number, boolean>>({});
 
-  const pages = [
-    {
-      title: journal.title,
-      content: journal.description || "Welcome to your journal! Start writing your thoughts and memories here.",
-      type: "cover"
-    },
-    {
-      title: "Page 1",
-      content: "This is the first page of your journal. You can add your entries here.",
-      type: "content"
-    },
-    {
-      title: "Page 2",
-      content: "Another blank page waiting for your stories...",
-      type: "content"
-    }
-  ];
+  // Create 5 pages by default
+  const pages = Array.from({ length: 5 }, (_, index) => ({
+    id: index + 1,
+    title: index === 0 ? journal.title : `Page ${index}`,
+    content: index === 0 ? (journal.description || "Welcome to your journal!") : "Blank page - ready for your memories",
+    type: index === 0 ? "cover" : "content"
+  }));
+
+  // Load page content status
+  useEffect(() => {
+    const loadPageStatuses = async () => {
+      try {
+        const pagesRef = collection(db, 'journals', journal.id, 'pages');
+        const querySnapshot = await getDocs(pagesRef);
+
+        const status: Record<number, boolean> = {};
+        querySnapshot.forEach((doc) => {
+          const pageId = parseInt(doc.id.replace('page-', ''));
+          const data = doc.data();
+          status[pageId] = (data.items && data.items.length > 0) || false;
+        });
+        setPageContentStatus(status);
+      } catch (error) {
+        console.error('Error loading page statuses:', error);
+      }
+    };
+
+    loadPageStatuses();
+  }, [journal.id]);
 
   return (
     <div className="book-viewer-overlay">
       <div className="book-viewer">
         <button onClick={onClose} className="close-book-btn">×</button>
-        <HTMLFlipBook
-          width={400}
-          height={600}
-          size="stretch"
-          minWidth={300}
-          maxWidth={500}
-          minHeight={400}
-          maxHeight={700}
-          showCover={true}
-          flippingTime={1000}
-          className="book"
-          startPage={0}
-          drawShadow={true}
-          usePortrait={false}
-          startZIndex={0}
-          autoSize={true}
-          maxShadowOpacity={0.5}
-          showPageCorners={true}
-          disableFlipByClick={false}
-          useMouseEvents={true}
-          swipeDistance={30}
-          clickEventForward={true}
-          mobileScrollSupport={true}
-          style={{}}
-          onFlip={(e) => setCurrentPage(e.data)}
-          onChangeOrientation={() => {}}
-          onChangeState={() => {}}
-        >
-          {pages.map((page, index) => (
-            <div key={index} className={`page ${page.type}`}>
-              <div className="page-content">
-                {page.type === 'cover' ? (
-                  <div className="cover-page">
-                    <h1>{page.title}</h1>
-                    <p className="cover-description">{page.content}</p>
-                    <div className="cover-meta">
-                      Created: {journal.createdAt.toLocaleDateString()}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="content-page">
-                    <h2>{page.title}</h2>
-                    <div className="page-text">
-                      {page.content}
-                    </div>
-                  </div>
+        <h2>{journal.title}</h2>
+        <div className="pages-grid">
+          {pages.map((page) => (
+            <div
+              key={page.id}
+              className={`page-thumbnail ${page.type === 'content' ? 'clickable' : ''} ${pageContentStatus[page.id] ? 'has-content' : ''}`}
+              onClick={() => page.type === 'content' && onPageClick(page.id)}
+            >
+              <div className="page-image-placeholder">
+                <div className="page-number">{page.id}</div>
+                {pageContentStatus[page.id] && (
+                  <div className="content-indicator">✏️</div>
                 )}
+                <div className="page-content-preview">
+                  {page.content.length > 50 ? `${page.content.substring(0, 50)}...` : page.content}
+                </div>
               </div>
+              <div className="page-label">{page.title}</div>
             </div>
           ))}
-        </HTMLFlipBook>
-        <div className="page-indicator">
-          Page {currentPage + 1} of {pages.length}
         </div>
       </div>
     </div>
