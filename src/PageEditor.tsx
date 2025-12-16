@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
 interface PageEditorProps {
   journal: {
@@ -11,7 +11,10 @@ interface PageEditorProps {
     color?: string;
   };
   pageId: number;
+  vibes?: string;
   onClose: () => void;
+  onRestart: () => void;
+  restaurant?: any;
 }
 
 interface DraggableItem {
@@ -22,7 +25,7 @@ interface DraggableItem {
   y: number;
 }
 
-const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, onClose }) => {
+const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose, onRestart, restaurant }) => {
   const [canvasItems, setCanvasItems] = useState<DraggableItem[]>([]);
   const [draggedItem, setDraggedItem] = useState<DraggableItem | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -60,8 +63,20 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, onClose }) => 
   const savePageContent = async (items: DraggableItem[]) => {
     try {
       const pageRef = doc(db, 'journals', journal.id, 'pages', `page-${pageId}`);
-      console.log('Saving page content to:', pageRef.path, 'with items:', items);
-      await setDoc(pageRef, { items, lastModified: new Date() });
+      const pageData: any = {
+        items,
+        lastModified: new Date()
+      };
+
+      if (restaurant) {
+        pageData.restaurant = restaurant;
+      }
+      if (vibes) {
+        pageData.vibes = vibes;
+      }
+
+      console.log('Saving page content to:', pageRef.path, 'with data:', pageData);
+      await setDoc(pageRef, pageData);
       console.log('Page content saved successfully');
     } catch (error) {
       console.error('Error saving page content:', error);
@@ -80,6 +95,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, onClose }) => 
     { id: 'text2', type: 'text' as const, content: 'Another text block' },
     { id: 'image1', type: 'image' as const, content: '📷 Image Placeholder' },
     { id: 'image2', type: 'image' as const, content: '🖼️ Another Image' },
+    ...(vibes ? [{ id: 'vibes', type: 'text' as const, content: vibes }] : []),
   ];
 
   const handleDragStart = (item: Omit<DraggableItem, 'x' | 'y'>) => {
@@ -116,12 +132,40 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, onClose }) => 
     setCanvasItems(items => items.filter(item => item.id !== id));
   };
 
+  const handleRestart = async () => {
+    try {
+      // Delete the page data from Firestore
+      const pageRef = doc(db, 'journals', journal.id, 'pages', `page-${pageId}`);
+      await deleteDoc(pageRef);
+      console.log('Page data deleted, restarting...');
+      onRestart();
+    } catch (error) {
+      console.error('Error deleting page data:', error);
+    }
+  };
+
   return (
     <div className="page-editor-overlay">
       <div className="page-editor">
         <div className="editor-header">
-          <h2>Editing Page {pageId} - {journal.title}</h2>
-          <button onClick={onClose} className="close-editor-btn">×</button>
+          <div className="page-info">
+            <h2>Editing Page {pageId} - {journal.title}</h2>
+            {restaurant && (
+              <div className="restaurant-info">
+                <h3>{restaurant.name}</h3>
+                <p>{restaurant.location?.address1}, {restaurant.location?.city}</p>
+                <div className="restaurant-meta">
+                  ⭐ {restaurant.rating} ({restaurant.review_count} reviews) • {restaurant.categories?.map((c: any) => c.title).join(', ')}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="editor-actions">
+            <button onClick={handleRestart} className="restart-btn">
+              Change Restaurant
+            </button>
+            <button onClick={onClose} className="close-editor-btn">×</button>
+          </div>
         </div>
 
         <div className="editor-content">
