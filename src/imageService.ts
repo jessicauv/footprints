@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+
 
 export interface GeneratedImage {
   url: string;

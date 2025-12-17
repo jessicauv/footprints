@@ -11,7 +11,7 @@ import Gallery from './Gallery';
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { imageService, type GeneratedImage } from './imageService';
-import { db } from './firebase';
+
 
 interface Journal {
   id: string;
