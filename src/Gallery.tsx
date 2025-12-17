@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
-import { collection, getDocs, orderBy, query, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 
 interface GalleryItem {
   id: string;
