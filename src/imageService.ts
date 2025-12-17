@@ -105,45 +105,7 @@ No extra objects, clutter, or background details.`);
     return prompts;
   }
 
-  private async convertImageToDataURL(imageUrl: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      console.log('📥 Converting image from Azure to data URL:', imageUrl);
 
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-
-      img.onload = () => {
-        try {
-          // Create canvas and draw image
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d')!;
-
-          // Set canvas size to match image
-          canvas.width = img.width;
-          canvas.height = img.height;
-
-          // Draw the image to canvas
-          ctx.drawImage(img, 0, 0);
-
-          // Convert to data URL
-          const dataURL = canvas.toDataURL('image/png');
-          console.log('✅ Image converted to data URL, size:', dataURL.length, 'characters');
-          resolve(dataURL);
-        } catch (error) {
-          console.error('❌ Error drawing image to canvas:', error);
-          reject(error);
-        }
-      };
-
-      img.onerror = () => {
-        console.error('❌ Error loading image from Azure');
-        reject(new Error('Failed to load image from Azure'));
-      };
-
-      // Set src after event handlers are attached
-      img.src = imageUrl;
-    });
-  }
 
   async generateImagesFromPrompts(prompts: string[]): Promise<GeneratedImage[]> {
     if (!this.openai) {

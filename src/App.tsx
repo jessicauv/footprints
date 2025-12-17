@@ -111,7 +111,6 @@ function MainApp() {
       }
 
       // Use Yelp AI API to generate detailed restaurant information
-      const address = `${restaurant.location?.address1 || ''}, ${restaurant.location?.city || ''}, ${restaurant.location?.state || ''} ${restaurant.location?.zip_code || ''}`.trim();
       const query = `Describe ${restaurant.name} using the following format only:
 Menu Items:
 

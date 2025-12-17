@@ -1,24 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 interface HomepageProps {
   onGoToLogin: () => void;
 }
 
 const Homepage: React.FC<HomepageProps> = ({ onGoToLogin }) => {
-  const [showApiWarning, setShowApiWarning] = useState(false);
-
-  useEffect(() => {
-    // Show the API warning popup when the component mounts
-    const timer = setTimeout(() => {
-      setShowApiWarning(true);
-    }, 500); // Small delay to let the page load
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const closeApiWarning = () => {
-    setShowApiWarning(false);
-  };
 
   return (
     <div className="homepage">
