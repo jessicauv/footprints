@@ -15,149 +15,97 @@ export class ImageService {
         apiKey: apiKey,
         dangerouslyAllowBrowser: true // Note: In production, API calls should be made from backend
       });
-      // Test API call to verify it's working
-      (async () => {
-        try {
-          const completion = await this.openai!.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: "Test message" }],
-            max_tokens: 5,
-          });
-          console.log('✅ OpenAI API test successful:', completion.choices[0]?.message?.content);
-        } catch (error) {
-          console.error('❌ OpenAI API test failed:', error);
-        }
-      })();
+      console.log('✅ OpenAI API initialized');
+    } else {
+      console.warn('⚠️ OpenAI API key not found. Set VITE_OPENAI_API_KEY in .env');
     }
   }
 
+  // Parse menu items and location from Yelp AI response
+  private parseYelpResponse(detailedInfo: string): { menuItems: string[], location: string } {
+    const lines = detailedInfo.split('\n').map(line => line.trim());
+
+    let menuItems: string[] = [];
+    let location = '';
+
+    let inMenuSection = false;
+
+    for (const line of lines) {
+      if (line.toLowerCase().includes('menu items:')) {
+        inMenuSection = true;
+        continue;
+      }
+
+      if (line.toLowerCase().includes('location:')) {
+        inMenuSection = false;
+        // Extract location description after "Location:"
+        const locationMatch = line.match(/location:\s*(.+)/i);
+        if (locationMatch) {
+          location = locationMatch[1].trim();
+        }
+        continue;
+      }
+
+      if (inMenuSection && line && !line.startsWith('Menu Items:') && line.length > 0) {
+        // Clean up the menu item (remove numbering, extra spaces)
+        const cleanItem = line.replace(/^\d+\.\s*/, '').trim();
+        if (cleanItem) {
+          menuItems.push(cleanItem);
+        }
+      }
+    }
+
+    // Ensure we have at least 3 menu items, pad with McDonald's defaults if needed
+    while (menuItems.length < 3) {
+      const defaultItems = ["McDonald's fries", "McDonald's burger", "vanilla milkshake"];
+      menuItems.push(defaultItems[menuItems.length] || `Menu Item ${menuItems.length + 1}`);
+    }
+
+    // Take only first 3 menu items
+    menuItems = menuItems.slice(0, 3);
+
+    // Default location if not found
+    if (!location) {
+      location = 'countryside';
+    }
+
+    return { menuItems, location };
+  }
+
   async generateImagePrompts(detailedInfo: string): Promise<string[]> {
-    if (!this.openai) {
-      console.warn('OpenAI API key not configured - using default prompts');
-      return [
-        "Restaurant exterior with warm lighting",
-        "Cozy interior dining area",
-        "Delicious food presentation",
-        "Colorful decor and ambiance",
-        "People enjoying a meal together",
-        "Signature dish close-up",
-        "Atmospheric lighting and mood",
-        "Restaurant entrance and signage"
-      ];
-    }
+    console.log('🔍 Parsing Yelp AI response:', detailedInfo);
+    const { menuItems, location } = this.parseYelpResponse(detailedInfo);
 
-    console.log('🤖 Generating image prompts from detailedInfo...');
-    const prompt = `Based on this detailed information about a restaurant: "${detailedInfo}"
+    console.log('📝 Extracted menu items:', menuItems);
+    console.log('📍 Extracted location:', location);
 
-    Generate exactly 8 distinct image-generation prompts for DALL·E.
-Each prompt should describe a cute, sticker-style illustration that can be used in a digital diary or journal to represent a restaurant or place visited.
+    // Generate 3 prompts: menu items only
+    const prompts: string[] = [];
 
-Sticker style requirements:
+    // Add menu item prompts
+    menuItems.forEach(item => {
+      prompts.push(`Generate a sticker-like image that represents ${item}. It should be in the style of an aesthetic sticker for a journal. It should have no text or very little - only use cartoon/sticker like style.`);
+    });
 
-Cute, playful, and simple (cartoon / kawaii-style)
-
-Designed as individual stickers
-
-Transparent background (no background)
-
-No text, letters, numbers, or words in the image
-
-Sticker content guidelines:
-
-Each prompt should represent a different visual idea, such as:
-
-A polaroid-style picture frame (without any text)
-
-Cartoon illustrations of menu items
-
-A flag representing the cuisine or country
-
-Emojis or symbolic icons
-
-A city/high-rise building if the place is downtown
-
-A money or luxury symbol if the place is expensive
-
-Do not repeat the same concept across prompts
-
-Output only the 8 image prompts, clearly separated (one per line or numbered). Do not include explanations or extra text.
-
-Return only the 8 prompts, one per line, with no additional text or numbering.`;
-
-    try {
-      console.log('📡 Calling ChatGPT API...');
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "user", content: prompt }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-      });
-
-      const response = completion.choices[0]?.message?.content?.trim();
-      if (!response) {
-        throw new Error('No response from OpenAI');
-      }
-
-      console.log('✅ ChatGPT response received:', response);
-
-      // Split by newlines and clean up
-      const prompts = response.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .slice(0, 8); // Ensure we only get 8 prompts
-
-      console.log('🎨 Generated prompts:', prompts);
-
-      if (prompts.length < 8) {
-        // If we don't have 8 prompts, create some defaults
-        const defaults = [
-          "Restaurant exterior with warm lighting",
-          "Cozy interior dining area",
-          "Delicious food presentation",
-          "Colorful decor and ambiance",
-          "People enjoying a meal together",
-          "Signature dish close-up",
-          "Atmospheric lighting and mood",
-          "Restaurant entrance and signage"
-        ];
-        return [...prompts, ...defaults.slice(prompts.length)];
-      }
-
-      return prompts;
-    } catch (error) {
-      console.error('❌ Error generating image prompts:', error);
-      // Return default prompts if API fails
-      console.log('⚠️ Using fallback prompts');
-      return [
-        "Restaurant exterior with warm lighting",
-        "Cozy interior dining area",
-        "Delicious food presentation",
-        "Colorful decor and ambiance",
-        "People enjoying a meal together",
-        "Signature dish close-up",
-        "Atmospheric lighting and mood",
-        "Restaurant entrance and signage"
-      ];
-    }
+    console.log('🎨 Generated 3 prompts:', prompts);
+    return prompts;
   }
 
   async generateImagesFromPrompts(prompts: string[]): Promise<GeneratedImage[]> {
     if (!this.openai) {
-      throw new Error('OpenAI API key not configured');
+      console.warn('OpenAI API not initialized - cannot generate images');
+      return [];
     }
 
-    console.log('🎨 Generating images from prompts...', prompts);
+    console.log('🎨 Generating 3 images from prompts...', prompts);
 
     const imagePromises = prompts.map(async (prompt, index) => {
       try {
-        console.log(`🖼️ Generating image ${index + 1}/8: "${prompt}"`);
+        console.log(`🖼️ Generating image ${index + 1}/3: "${prompt}"`);
         const response = await this.openai!.images.generate({
-          model: "dall-e-3",
+          model: "dall-e-2",
           prompt: prompt,
-          size: "1024x1024",
-          quality: "standard",
+          size: "512x512",
           n: 1,
         });
 
@@ -173,8 +121,11 @@ Return only the 8 prompts, one per line, with no additional text or numbering.`;
         };
       } catch (error) {
         console.error(`❌ Error generating image ${index + 1}:`, error);
-        // Return a placeholder or throw
-        throw error;
+        // Return placeholder on error
+        return {
+          url: `https://via.placeholder.com/512x512.png?text=Error+${index + 1}`,
+          prompt: prompt
+        };
       }
     });
 
@@ -184,7 +135,6 @@ Return only the 8 prompts, one per line, with no additional text or numbering.`;
       return results;
     } catch (error) {
       console.error('❌ Error generating images:', error);
-      // Return empty array or partial results
       return [];
     }
   }

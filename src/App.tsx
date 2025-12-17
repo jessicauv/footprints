@@ -117,7 +117,17 @@ function MainApp() {
 
       // Use Yelp AI API to generate detailed restaurant information
       const address = `${restaurant.location?.address1 || ''}, ${restaurant.location?.city || ''}, ${restaurant.location?.state || ''} ${restaurant.location?.zip_code || ''}`.trim();
-      const query = `Describe ${restaurant.name} restaurant at ${address} in 40-60 words, focusing on visual appearance, colors, atmosphere, patterns, and key features for creating images.`;
+      const query = `Describe ${restaurant.name} using the following format only:
+Menu Items:
+
+Item 1
+
+Item 2
+
+Item 3
+Location: Generalized location description (e.g., downtown, city center, suburbs, waterfront).
+
+Do not include a full address or any visual description.`;
 
       const response = await fetch('https://api.yelp.com/ai/chat/v2', {
         method: 'POST',
@@ -164,7 +174,7 @@ function MainApp() {
   // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
   const generateMenuItems = async (restaurant: any) => {
     // return default values to save API credits
-    return 'Sample Item - $15.99\nAnother Dish - $12.50';
+    return 'McDonald\'s fries\nMcDonald\'s burger\nvanilla milkshake';
 
     /*
     try {
@@ -295,12 +305,10 @@ function MainApp() {
   };
 
   // Generate images when detailedInfo is available
-  // COMMENTED OUT DUE TO BILLING LIMIT REACHED
-  /*
   useEffect(() => {
     const generateImages = async () => {
       if (pageDetailedInfo && generatedImages.length === 0 && !isGeneratingImages) {
-        console.log('🚀 Starting image generation process for restaurant page');
+        console.log('🚀 Starting DALL-E image generation process for restaurant page');
         setIsGeneratingImages(true);
         try {
           console.log('📝 Detailed info received:', pageDetailedInfo.substring(0, 100) + '...');
@@ -311,14 +319,13 @@ function MainApp() {
           console.error('💥 Failed to generate images:', error);
         } finally {
           setIsGeneratingImages(false);
-          console.log('🏁 Image generation process completed');
+          console.log('🏁 DALL-E image generation process completed');
         }
       }
     };
 
     generateImages();
   }, [pageDetailedInfo, generatedImages.length, isGeneratingImages]);
-  */
 
   if (loading) {
     return <div className="loading">Loading...</div>;
