@@ -74,9 +74,16 @@ function MainApp() {
     } else if (showLogin) {
       return (
         <div className="app">
-          <h1>footprints</h1>
-          <p className="subtitle">Add footprints everywhere you go!</p>
-          <AuthForm />
+          <h1 className="login-title" onClick={() => {
+            setShowHomepage(true);
+            setShowLogin(false);
+          }}>footprints</h1>
+          <div className="login-container">
+            <img src="/login-card.png" alt="Login Card" className="login-card" />
+            <div className="login-form-overlay">
+              <AuthForm />
+            </div>
+          </div>
         </div>
       );
     }
