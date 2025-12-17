@@ -1,17 +1,16 @@
 
 
+import OpenAI from 'openai';
+
 export interface GeneratedImage {
   url: string;
   prompt: string;
 }
 
 export class ImageService {
-  // COMMENTED OUT TO SAVE CHATGPT CREDITS
-  // private openai: OpenAI | null = null;
+  private openai: OpenAI | null = null;
 
   constructor() {
-    // COMMENTED OUT TO SAVE CHATGPT CREDITS
-    /*
     const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
     if (apiKey) {
       this.openai = new OpenAI({
@@ -22,7 +21,6 @@ export class ImageService {
     } else {
       console.warn('⚠️ OpenAI API key not found. Set VITE_OPENAI_API_KEY in .env');
     }
-    */
   }
 
   // Parse menu items and location from Yelp AI response
@@ -107,60 +105,47 @@ No extra objects, clutter, or background details.`);
     return prompts;
   }
 
-  // COMMENTED OUT TO SAVE CHATGPT CREDITS - Convert image URL to data URL for local storage
-  /*
   private async convertImageToDataURL(imageUrl: string): Promise<string> {
-    try {
-      console.log('📥 Downloading image from Azure:', imageUrl);
-      const response = await fetch(imageUrl);
+    return new Promise((resolve, reject) => {
+      console.log('📥 Converting image from Azure to data URL:', imageUrl);
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-      }
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
 
-      const blob = await response.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataURL = reader.result as string;
+      img.onload = () => {
+        try {
+          // Create canvas and draw image
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d')!;
+
+          // Set canvas size to match image
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          // Draw the image to canvas
+          ctx.drawImage(img, 0, 0);
+
+          // Convert to data URL
+          const dataURL = canvas.toDataURL('image/png');
           console.log('✅ Image converted to data URL, size:', dataURL.length, 'characters');
           resolve(dataURL);
-        };
-        reader.onerror = () => reject(new Error('Failed to convert blob to data URL'));
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error('❌ Error converting image to data URL:', error);
-      throw error;
-    }
+        } catch (error) {
+          console.error('❌ Error drawing image to canvas:', error);
+          reject(error);
+        }
+      };
+
+      img.onerror = () => {
+        console.error('❌ Error loading image from Azure');
+        reject(new Error('Failed to load image from Azure'));
+      };
+
+      // Set src after event handlers are attached
+      img.src = imageUrl;
+    });
   }
-  */
 
   async generateImagesFromPrompts(prompts: string[]): Promise<GeneratedImage[]> {
-    // COMMENTED OUT TO SAVE CHATGPT/DALL-E CREDITS
-    console.log('🎨 Image generation commented out to save credits');
-    console.log('Would generate images from prompts:', prompts);
-
-    // Return placeholder images instead
-    return prompts.map((prompt, index) => ({
-      url: `data:image/svg+xml;base64,${btoa(`
-        <svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-          <rect width="512" height="512" fill="#e3f2fd"/>
-          <text x="256" y="240" text-anchor="middle" font-family="Arial" font-size="20" fill="#1976d2">
-            Image Generation
-          </text>
-          <text x="256" y="270" text-anchor="middle" font-family="Arial" font-size="16" fill="#666">
-            Paused to Save Credits
-          </text>
-          <text x="256" y="290" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">
-            ${index + 1}/3
-          </text>
-        </svg>
-      `)}`,
-      prompt: prompt
-    }));
-
-    /*
     if (!this.openai) {
       console.warn('OpenAI API not initialized - cannot generate images');
       return [];
@@ -186,11 +171,9 @@ No extra objects, clutter, or background details.`);
 
         console.log(`✅ Image ${index + 1} generated from Azure:`, azureImageUrl.substring(0, 50) + '...');
 
-        // Convert the Azure URL to a local data URL
-        const dataUrl = await this.convertImageToDataURL(azureImageUrl);
-
+        // Return the Azure URL directly - CORS issues will be handled on display
         return {
-          url: dataUrl,
+          url: azureImageUrl,
           prompt: prompt
         };
       } catch (error) {
@@ -220,7 +203,6 @@ No extra objects, clutter, or background details.`);
       console.error('❌ Error generating images:', error);
       return [];
     }
-    */
   }
 
   async generateRestaurantImages(detailedInfo: string): Promise<GeneratedImage[]> {

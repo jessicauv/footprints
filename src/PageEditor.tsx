@@ -264,12 +264,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
     }
   };
 
-  // Save when items change (only after initial load)
-  useEffect(() => {
-    if (hasLoadedRef.current) {
-      savePageContent(canvasItems);
-    }
-  }, [canvasItems]);
+
 
   const sidebarItems = [
     { id: 'text', type: 'text' as const, content: 'Add Text' },
@@ -306,7 +301,10 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
         x: 50, // Default position
         y: 50,
       };
-      setCanvasItems([...canvasItems, newItem]);
+      const newItems = [...canvasItems, newItem];
+      setCanvasItems(newItems);
+      // Save after uploading image
+      savePageContent(newItems);
     };
     reader.readAsDataURL(file);
 
@@ -400,7 +398,11 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
         editable: draggedItem.content !== vibes && draggedItem.content !== `⭐ ${restaurant?.rating || ''}`, // Vibes and rating text are not editable
       };
 
-      setCanvasItems([...canvasItems, newItem]);
+      const newItems = [...canvasItems, newItem];
+      setCanvasItems(newItems);
+
+      // Save after adding new item
+      savePageContent(newItems);
 
       // If it's a text item and editable, start editing immediately
       if (draggedItem.type === 'text' && draggedItem.content !== vibes && draggedItem.content !== `⭐ ${restaurant?.rating || ''}`) {
@@ -413,7 +415,10 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
 
 
   const deleteItem = (id: string) => {
-    setCanvasItems(items => items.filter(item => item.id !== id));
+    const newItems = canvasItems.filter(item => item.id !== id);
+    setCanvasItems(newItems);
+    // Save after deleting item
+    savePageContent(newItems);
   };
 
   const startEditingText = (id: string) => {
@@ -421,11 +426,12 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   };
 
   const updateTextContent = (id: string, newContent: string) => {
-    setCanvasItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, content: newContent } : item
-      )
+    const newItems = canvasItems.map(item =>
+      item.id === id ? { ...item, content: newContent } : item
     );
+    setCanvasItems(newItems);
+    // Save after text content update
+    savePageContent(newItems);
   };
 
   const finishEditingText = () => {
@@ -471,13 +477,17 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
     setCanvasItems(items =>
       items.map(item =>
         item.id === draggingItem
-          ? { ...item, x: Math.max(0, newX), y: Math.max(0, newY) }
+          ? { ...item, x: newX, y: newY }
           : item
       )
     );
   };
 
   const handleMouseUp = () => {
+    if (draggingItem || resizingItem || rotatingItem) {
+      // Save after drag, resize, or rotate operations
+      savePageContent(canvasItems);
+    }
     setDraggingItem(null);
     setResizingItem(null);
     setRotatingItem(null);
@@ -905,6 +915,23 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                         objectFit: 'contain',
                         border: 'none',
                         pointerEvents: 'none'
+                      }}
+                      onError={(e) => {
+                        // Handle CORS errors for DALL-E images by showing placeholder
+                        const target = e.target as HTMLImageElement;
+                        if (target.src.includes('oaidalleapiprodscus.blob.core.windows.net')) {
+                          target.src = `data:image/svg+xml;base64,${btoa(`
+                            <svg width="150" height="150" xmlns="http://www.w3.org/2000/svg">
+                              <rect width="150" height="150" fill="#e3f2fd"/>
+                              <text x="75" y="70" text-anchor="middle" font-family="Arial" font-size="12" fill="#1976d2">
+                                AI Image
+                              </text>
+                              <text x="75" y="85" text-anchor="middle" font-family="Arial" font-size="10" fill="#666">
+                                (CORS blocked)
+                              </text>
+                            </svg>
+                          `)}`;
+                        }
                       }}
                     />
                   )}

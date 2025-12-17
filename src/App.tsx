@@ -103,12 +103,7 @@ function MainApp() {
 
 
   // Yelp AI API call to generate detailed restaurant information
-  // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
-  const generateDetailedInfo = async (_restaurant: any) => {
-    // return default values to save API credits
-    return 'Detailed information not available.';
-
-    /*
+  const generateDetailedInfo = async (restaurant: any) => {
     try {
       const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
       if (!YELP_API_KEY) {
@@ -167,7 +162,6 @@ Do not include a full address or any visual description.`;
       // Fallback to generic info if API fails
       return 'Detailed information not available.';
     }
-    */
   };
 
   // Yelp AI API call to generate menu/service items

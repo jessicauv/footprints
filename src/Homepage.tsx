@@ -45,7 +45,7 @@ const Homepage: React.FC<HomepageProps> = ({ onGoToLogin }) => {
         </div>
       </div>
 
-      {showApiWarning && (
+      {/* {showApiWarning && (
         <div className="api-warning-overlay">
           <div className="api-warning-modal">
             <div className="api-warning-header">
@@ -59,7 +59,7 @@ const Homepage: React.FC<HomepageProps> = ({ onGoToLogin }) => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
