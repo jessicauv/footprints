@@ -30,6 +30,7 @@ interface DraggableItem {
   y: number;
   width?: number;
   height?: number;
+  rotation?: number;
   editable?: boolean;
 }
 
@@ -174,6 +175,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [resizingItem, setResizingItem] = useState<string | null>(null);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [rotatingItem, setRotatingItem] = useState<string | null>(null);
+  const [rotationStart, setRotationStart] = useState({ x: 0, y: 0, angle: 0 });
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
 
@@ -447,6 +450,11 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (rotatingItem) {
+      handleRotationMove(e);
+      return;
+    }
+
     if (resizingItem) {
       handleResizeMove(e);
       return;
@@ -472,6 +480,50 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   const handleMouseUp = () => {
     setDraggingItem(null);
     setResizingItem(null);
+    setRotatingItem(null);
+  };
+
+  const handleRotationStart = (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    const item = canvasItems.find(item => item.id === itemId);
+    if (!item) return;
+
+    const itemCenterX = item.x + (item.width || 150) / 2;
+    const itemCenterY = item.y + (item.height || 150) / 2;
+
+    // Calculate initial angle from center to mouse
+    const angle = Math.atan2(e.clientY - itemCenterY, e.clientX - itemCenterX) * (180 / Math.PI);
+
+    setRotatingItem(itemId);
+    setRotationStart({
+      x: itemCenterX,
+      y: itemCenterY,
+      angle: angle - (item.rotation || 0)
+    });
+
+    e.preventDefault();
+  };
+
+  const handleRotationMove = (e: React.MouseEvent) => {
+    if (!rotatingItem) return;
+
+    // Calculate new angle from center to mouse
+    const newAngle = Math.atan2(e.clientY - rotationStart.y, e.clientX - rotationStart.x) * (180 / Math.PI);
+
+    // Apply rotation with constraints
+    let finalAngle = newAngle - rotationStart.angle;
+
+    // Normalize angle to -180 to 180 range
+    while (finalAngle > 180) finalAngle -= 360;
+    while (finalAngle < -180) finalAngle += 360;
+
+    setCanvasItems(items =>
+      items.map(item =>
+        item.id === rotatingItem
+          ? { ...item, rotation: Math.round(finalAngle) }
+          : item
+      )
+    );
   };
 
   const handleResizeStart = (e: React.MouseEvent, itemId: string) => {
@@ -570,6 +622,19 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   const sharePage = async () => {
     console.log('Share button clicked for journal:', journal.id, 'page:', pageId);
     try {
+      // First check if user is authenticated
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        console.error('User not authenticated');
+        alert('You must be logged in to share pages. Please refresh the page and try again.');
+        return;
+      }
+
+      console.log('Current user:', currentUser.uid);
+
       // Share the journal if it's not already shared (required for page access)
       const journalRef = doc(db, 'journals', journal.id);
       console.log('Checking journal document:', journalRef.path);
@@ -577,28 +642,74 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
 
       console.log('Journal document exists:', journalSnap.exists());
       let journalShared = false;
+      let journalData: any = null;
+
       if (journalSnap.exists()) {
-        const data = journalSnap.data();
-        console.log('Journal data:', data);
-        journalShared = data?.isPublic || false;
+        journalData = journalSnap.data();
+        console.log('Journal data:', journalData);
+        console.log('Journal userId:', journalData?.userId);
+        console.log('Current user matches:', journalData?.userId === currentUser.uid);
+
+        // Check if user owns this journal (either by userId or if it's a legacy journal)
+        const userOwnsJournal = journalData?.userId === currentUser.uid || !journalData?.userId;
+        if (!userOwnsJournal) {
+          console.error('User does not own this journal');
+          alert('You do not have permission to share this journal.');
+          return;
+        }
+
+        journalShared = journalData?.isPublic || false;
         console.log('Journal is currently shared:', journalShared);
       } else {
         console.error('Journal document does not exist!');
+        alert('Journal not found. Please try again.');
         return;
       }
 
     // If journal is not shared, share it first
     if (!journalShared) {
       console.log('Making journal public...');
+      console.log('Journal data before update:', journalData);
+
       try {
-        await updateDoc(journalRef, {
+        const updateData = {
           isPublic: true,
           sharedAt: new Date()
-        });
+        };
+        console.log('Updating with data:', updateData);
+
+        await updateDoc(journalRef, updateData);
+        console.log('updateDoc completed successfully');
+
+        // Verify the update worked
+        console.log('Verifying update...');
+        const verifySnap = await getDoc(journalRef);
+        const verifyData = verifySnap.data();
+        console.log('Verification - journal data after update:', verifyData);
+        console.log('Verification - journal is now public:', verifyData?.isPublic);
+
+        if (!verifyData?.isPublic) {
+          console.error('Update verification failed - journal is still not public!');
+          alert('Failed to make journal public. Please try again.');
+          return;
+        }
+
         console.log('Journal successfully made public');
       } catch (updateError) {
         console.error('Failed to make journal public:', updateError);
-        alert('Failed to share journal. You may not have permission to share this journal, or there may be a database issue.');
+        const error = updateError as Error;
+        console.error('Error details:', {
+          code: (error as any)?.code,
+          message: error.message,
+          name: error.name
+        });
+
+        // Check for specific Firestore errors
+        if ((error as any)?.code === 'permission-denied') {
+          alert('You do not have permission to share this journal. Please check that you own this journal.');
+        } else {
+          alert('Failed to share journal. Please try again.');
+        }
         return;
       }
     }
@@ -614,6 +725,12 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
       console.log('Share options set to visible, link:', link);
     } catch (error) {
       console.error('Error sharing page:', error);
+      const err = error as Error;
+      console.error('Error details:', {
+        code: (err as any)?.code,
+        message: err.message,
+        name: err.name
+      });
       // Show user-friendly error message
       alert('Failed to share page. Please check your permissions and try again.');
     }
@@ -742,6 +859,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                     top: item.y,
                     width: item.width || (item.type === 'text' ? 200 : 150),
                     height: item.height || (item.type === 'text' ? 50 : 150),
+                    transform: item.rotation ? `rotate(${item.rotation}deg)` : undefined,
+                    transformOrigin: 'center center',
                     cursor: editingTextId === item.id ? 'text' : (item.editable !== false ? 'move' : 'default')
                   }}
                   onMouseDown={(e) => handleMouseDown(e, item.id)}
@@ -790,9 +909,10 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                     />
                   )}
 
-                  {/* Resize handles - only show when hovered and not editing text */}
+                  {/* Transform handles - only show when hovered and not editing text */}
                   {hoveredItem === item.id && item.editable !== false && !editingTextId && (
-                    <div className="resize-handles">
+                    <div className="transform-handles">
+                      {/* Resize handle */}
                       <div
                         className="resize-handle se"
                         onMouseDown={(e) => handleResizeStart(e, item.id)}
@@ -805,6 +925,24 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                           background: '#646cff',
                           cursor: 'nw-resize',
                           borderRadius: '50%'
+                        }}
+                      />
+                      {/* Rotation handle */}
+                      <div
+                        className="rotation-handle"
+                        onMouseDown={(e) => handleRotationStart(e, item.id)}
+                        style={{
+                          position: 'absolute',
+                          top: '-12px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: '12px',
+                          height: '12px',
+                          background: '#ff6b6b',
+                          cursor: 'alias',
+                          borderRadius: '50%',
+                          border: '2px solid white',
+                          boxShadow: '0 0 4px rgba(0,0,0,0.3)'
                         }}
                       />
                     </div>
