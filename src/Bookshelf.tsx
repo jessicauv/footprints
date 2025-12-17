@@ -194,6 +194,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({ onJournalClick }) => {
                 onChange={(e) => setNewJournalDescription(e.target.value)}
                 placeholder="Enter journal description"
                 rows={3}
+                maxLength={100}
               />
             </div>
             <div className="modal-actions">
@@ -232,7 +233,6 @@ const Bookshelf: React.FC<BookshelfProps> = ({ onJournalClick }) => {
                 <div className="book-spine-front"></div>
                 <div className="book-cover">
                   <div className="book-title-front">{journal.title}</div>
-                  <div className="book-author-front">{user?.email?.split('@')[0] || 'Author'}</div>
                 </div>
                 <div className="book-pages-front"></div>
 

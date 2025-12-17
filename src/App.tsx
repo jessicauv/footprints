@@ -92,11 +92,10 @@ function MainApp() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>footprints</h1>
+        <h1 className="login-title">footprints</h1>
         <button onClick={logout} className="logout-btn">Logout</button>
       </header>
       <main>
-        <p className="subtitle">Welcome, {user?.email}! Add footprints everywhere you go!</p>
         {showRestaurantSelector && selectedJournal && selectedPage ? (
           <RestaurantSelector
             onRestaurantSelect={handleRestaurantSelect}

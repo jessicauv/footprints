@@ -20,7 +20,10 @@
 }
 
 .logout-btn {
-  background-color: #dc3545;
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  background-color: #b54622;
   color: white;
   border: none;
   padding: 0.5em 1em;
@@ -28,10 +31,11 @@
   border-radius: 0.3em;
   cursor: pointer;
   transition: background-color 0.3s;
+  z-index: 10;
 }
 
 .logout-btn:hover {
-  background-color: #c82333;
+  background-color: #9b3d1e;
 }
 
 .loading {
@@ -135,14 +139,16 @@
 
 .bookshelf-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   margin-bottom: 2rem;
+  gap: 1rem;
 }
 
 .bookshelf-header h2 {
   margin: 0;
   color: #333;
+  text-align: center;
 }
 
 .header-buttons {
@@ -152,7 +158,7 @@
 }
 
 .edit-journals-btn {
-  background-color: #6c757d;
+  background-color: #c0c29c;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -175,7 +181,7 @@
 }
 
 .create-journal-btn {
-  background-color: #28a745;
+  background-color: #df957a;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -186,7 +192,7 @@
 }
 
 .create-journal-btn:hover {
-  background-color: #218838;
+  background-color: #8f7c6d;
 }
 
 .create-journal-modal {
@@ -200,6 +206,22 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+}
+
+#journal-title {
+  font-family: 'Montserrat', sans-serif;
+}
+
+#journal-title::placeholder {
+  font-size: 0.9rem;
+}
+
+#journal-description {
+  font-family: 'Montserrat', sans-serif;
+}
+
+#journal-description::placeholder {
+  font-size: 0.9rem;
 }
 
 .modal-content {
@@ -224,7 +246,7 @@
 }
 
 .create-btn {
-  background-color: #28a745;
+  background-color: #bfb64d;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -344,7 +366,7 @@
   transform: translateX(-50%);
   width: 100%;
   height: 40px;
-  background: linear-gradient(to bottom, #8B4513 0%, #654321 50%, #3d2817 100%);
+  background: linear-gradient(to bottom, #453531 0%, #3a2a26 50%, #2d1f1a 100%);
   border-radius: 20px;
   box-shadow:
     0 8px 16px rgba(0, 0, 0, 0.3),

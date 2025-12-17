@@ -20,19 +20,21 @@ interface PageData {
   items?: any[];
   restaurant?: any;
   vibes?: string;
+  canvasImage?: string;
 }
 
 const BookViewer: React.FC<BookViewerProps> = ({ journal, onClose, onPageClick }) => {
   const [pageContentStatus, setPageContentStatus] = useState<Record<number, boolean>>({});
   const [pageVibes, setPageVibes] = useState<Record<number, string>>({});
   const [pageRestaurants, setPageRestaurants] = useState<Record<number, any>>({});
+  const [pageCanvasImages, setPageCanvasImages] = useState<Record<number, string>>({});
 
-  // Create 5 pages by default
-  const pages = Array.from({ length: 5 }, (_, index) => ({
+  // Create 6 pages by default
+  const pages = Array.from({ length: 6 }, (_, index) => ({
     id: index + 1,
-    title: index === 0 ? journal.title : `Page ${index}`,
-    content: index === 0 ? (journal.description || "Welcome to your journal!") : "Blank page - ready for your memories",
-    type: index === 0 ? "cover" : "content"
+    title: `Page ${index + 1}`,
+    content: "",
+    type: "content"
   }));
 
   // Load page content status and vibes
@@ -45,6 +47,7 @@ const BookViewer: React.FC<BookViewerProps> = ({ journal, onClose, onPageClick }
         const status: Record<number, boolean> = {};
         const vibes: Record<number, string> = {};
         const restaurants: Record<number, any> = {};
+        const canvasImages: Record<number, string> = {};
 
         querySnapshot.forEach((doc) => {
           const pageId = parseInt(doc.id.replace('page-', ''));
@@ -56,11 +59,15 @@ const BookViewer: React.FC<BookViewerProps> = ({ journal, onClose, onPageClick }
           if (data.restaurant) {
             restaurants[pageId] = data.restaurant;
           }
+          if (data.canvasImage) {
+            canvasImages[pageId] = data.canvasImage;
+          }
         });
 
         setPageContentStatus(status);
         setPageVibes(vibes);
         setPageRestaurants(restaurants);
+        setPageCanvasImages(canvasImages);
       } catch (error) {
         console.error('Error loading page data:', error);
       }
@@ -83,13 +90,27 @@ const BookViewer: React.FC<BookViewerProps> = ({ journal, onClose, onPageClick }
             >
               <div className="page-image-placeholder">
                 <div className="page-number">{page.id}</div>
-                {pageContentStatus[page.id] && (
-                  <div className="content-indicator">✏️</div>
+                {pageCanvasImages[page.id] ? (
+                  <img
+                    src={pageCanvasImages[page.id]}
+                    alt={`Page ${page.id} content`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '4px'
+                    }}
+                  />
+                ) : (
+                  <>
+                    {pageContentStatus[page.id] && (
+                      <div className="content-indicator">✏️</div>
+                    )}
+                    <div className="page-content-preview">
+                      {page.content.length > 50 ? `${page.content.substring(0, 50)}...` : page.content}
+                    </div>
+                  </>
                 )}
-                <div className="page-content-preview">
-                  {page.content.length > 50 ? `${page.content.substring(0, 50)}...` : page.content}
-                </div>
-
               </div>
               <div className="page-label">{page.title}</div>
             </div>
