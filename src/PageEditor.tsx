@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase';
-import { doc, getDoc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
 import { type GeneratedImage } from './imageService';
 import YelpStars, { getYelpStarsImageUrl } from './YelpStars';
@@ -536,6 +536,25 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
             sharedAt: new Date()
           });
           console.log('Journal successfully made public');
+
+          // Add this page to the gallery
+          try {
+            const canvasImage = await captureCanvas();
+            if (canvasImage) {
+              const galleryRef = collection(db, 'gallery');
+              await addDoc(galleryRef, {
+                imageUrl: canvasImage,
+                journalId: journal.id,
+                pageId: pageId,
+                restaurant: restaurant || null,
+                createdAt: new Date()
+              });
+              console.log('Page added to gallery successfully');
+            }
+          } catch (galleryError) {
+            console.error('Failed to add page to gallery:', galleryError);
+            // Don't block sharing if gallery fails
+          }
         } catch (updateError) {
           console.error('Failed to make journal public:', updateError);
           alert('Failed to share journal. You may not have permission to share this journal, or there may be a database issue.');
@@ -554,6 +573,46 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
       console.error('Error sharing page:', error);
       // Show user-friendly error message
       alert('Failed to share page. Please check your permissions and try again.');
+    }
+  };
+
+  // Share to gallery only (without making journal public)
+  const shareToGallery = async () => {
+    console.log('Share to gallery button clicked for journal:', journal.id, 'page:', pageId);
+    try {
+      console.log('Starting canvas capture...');
+      // Capture canvas image
+      const canvasImage = await captureCanvas();
+      if (!canvasImage) {
+        console.error('Canvas capture returned null/empty');
+        alert('Failed to capture journal image. Please try again.');
+        return;
+      }
+      console.log('Canvas captured successfully, image length:', canvasImage.length);
+
+      console.log('Attempting to add to gallery collection...');
+      // Add to gallery collection
+      const galleryRef = collection(db, 'gallery');
+      await addDoc(galleryRef, {
+        imageUrl: canvasImage,
+        journalId: journal.id,
+        pageId: pageId,
+        restaurant: restaurant || null,
+        createdAt: new Date()
+      });
+
+      console.log('Page added to gallery successfully');
+      // Redirect to gallery page
+      window.location.href = '/gallery';
+    } catch (error) {
+      console.error('Error sharing to gallery:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error details:', error instanceof Error ? {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      } : error);
+      alert(`Failed to share to gallery: ${errorMessage}`);
     }
   };
 
@@ -718,8 +777,11 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                   <button onClick={sharePage} className="share-page-btn">
                     📤 Share
                   </button>
+                  <button onClick={shareToGallery} className="share-gallery-btn">
+                    🖼️ Share to Gallery
+                  </button>
                 </div>
-                <p className="powered-by-yelp" style={{ fontFamily: 'Montserrat, sans-serif' }}>Powered by Yelp AI API</p>
+                <p className="powered-by-yelp" style={{ fontFamily: 'Montserrat, sans-serif', marginTop: '16px' }}>Powered by Yelp AI API</p>
               </div>
             </div>
           )}

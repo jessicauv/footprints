@@ -7,6 +7,7 @@ import PageEditor from './PageEditor';
 import RestaurantSelector from './RestaurantSelector';
 import SharedPageViewer from './SharedPageViewer';
 import Homepage from './Homepage';
+import Gallery from './Gallery';
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { imageService, type GeneratedImage } from './imageService';
@@ -420,6 +421,7 @@ function SharedPage() {
 function App() {
   return (
     <Routes>
+      <Route path="/gallery" element={<Gallery />} />
       <Route path="/shared/journal/:id/page/:pageId" element={<SharedPage />} />
       <Route path="/" element={<MainApp />} />
       <Route path="*" element={<Navigate to="/" replace />} />

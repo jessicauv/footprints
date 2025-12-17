@@ -131,6 +131,30 @@ No extra objects, clutter, or background details.`);
   }
 
   async generateImagesFromPrompts(prompts: string[]): Promise<GeneratedImage[]> {
+    // COMMENTED OUT TO SAVE CHATGPT/DALL-E CREDITS
+    console.log('🎨 Image generation commented out to save credits');
+    console.log('Would generate images from prompts:', prompts);
+
+    // Return placeholder images instead
+    return prompts.map((prompt, index) => ({
+      url: `data:image/svg+xml;base64,${btoa(`
+        <svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+          <rect width="512" height="512" fill="#e3f2fd"/>
+          <text x="256" y="240" text-anchor="middle" font-family="Arial" font-size="20" fill="#1976d2">
+            Image Generation
+          </text>
+          <text x="256" y="270" text-anchor="middle" font-family="Arial" font-size="16" fill="#666">
+            Paused to Save Credits
+          </text>
+          <text x="256" y="290" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">
+            ${index + 1}/3
+          </text>
+        </svg>
+      `)}`,
+      prompt: prompt
+    }));
+
+    /*
     if (!this.openai) {
       console.warn('OpenAI API not initialized - cannot generate images');
       return [];
@@ -190,6 +214,7 @@ No extra objects, clutter, or background details.`);
       console.error('❌ Error generating images:', error);
       return [];
     }
+    */
   }
 
   async generateRestaurantImages(detailedInfo: string): Promise<GeneratedImage[]> {
