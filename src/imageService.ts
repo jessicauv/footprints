@@ -84,7 +84,19 @@ export class ImageService {
 
     // Add menu item prompts
     menuItems.forEach(item => {
-      prompts.push(`Generate a sticker-like image that represents ${item}. It should be in the style of an aesthetic sticker for a journal. It should have no text or very little - only use cartoon/sticker like style.`);
+      prompts.push(`Generate a single, cartoon-style sticker of the menu item ${item}.
+
+The image should feature only this menu item.
+
+Use a solid background color that contrasts well with the item.
+
+Style should be cute, aesthetic, journal-friendly, and sticker-like, like something you could place in a digital journal.
+
+No text or logos (except very minimal, optional small label if necessary).
+
+The item should be centered and clearly visible, with clean, simple lines.
+
+No extra objects, clutter, or background details.`);
     });
 
     console.log('🎨 Generated 3 prompts:', prompts);
@@ -103,9 +115,10 @@ export class ImageService {
       try {
         console.log(`🖼️ Generating image ${index + 1}/3: "${prompt}"`);
         const response = await this.openai!.images.generate({
-          model: "dall-e-2",
+          model: "dall-e-3",
           prompt: prompt,
-          size: "512x512",
+          size: "1024x1024",
+          quality: "standard",
           n: 1,
         });
 

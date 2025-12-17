@@ -45,7 +45,7 @@ function MainApp() {
   // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
   const generateVibes = async (_restaurant: any) => {
     // return default values to save API credits
-    return 'Cozy, Authentic, Welcoming';
+    return 'Familiar, Casual, Fast-paced';
 
     /*
     try {
@@ -81,7 +81,7 @@ function MainApp() {
       const data = await response.json();
       // Extract the vibes from the AI response
       // The response might be an object with {text, tags} structure
-      let vibesText = 'Cozy, Authentic, Welcoming'; // Default fallback
+      let vibesText = 'Familiar, Casual, Fast-paced'; // Default fallback
 
       if (data.response) {
         if (typeof data.response === 'string') {
@@ -95,7 +95,7 @@ function MainApp() {
     } catch (error) {
       console.error('Error generating vibes:', error);
       // Fallback to generic vibes if API fails
-      return 'Cozy, Authentic, Welcoming';
+      return 'Familiar, Casual, Fast-paced';
     }
     */
   };
@@ -254,7 +254,7 @@ Do not include a full address or any visual description.`;
       setPageDetailedInfo(detailedInfoText);
     } catch (error) {
       // Fallback to default content if API fails
-      setPageVibes('Cozy, Authentic, Welcoming');
+      setPageVibes('Familiar, Casual, Fast-paced');
       setPageDetailedInfo('Detailed information not available.');
     } finally {
       setIsGeneratingContent(false);
@@ -385,7 +385,6 @@ Do not include a full address or any visual description.`;
             generatedImages={generatedImages}
             onImagesLoaded={handleImagesLoaded}
             onClose={handleClosePage}
-            onRestart={handleRestartPage}
           />
         ) : selectedJournal ? (
           <BookViewer

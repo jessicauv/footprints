@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!journal-components|assets|_next).*)",
       "destination": "/index.html"
     }
   ]

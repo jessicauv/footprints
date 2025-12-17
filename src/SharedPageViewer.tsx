@@ -16,6 +16,7 @@ interface PageData {
   restaurant?: any;
   vibes?: string;
   canvasImage?: string;
+  generatedImages?: any[];
 }
 
 interface SharedPageViewerProps {
@@ -40,12 +41,14 @@ const SharedPageViewer: React.FC<SharedPageViewerProps> = ({ journalId, pageId, 
 
         if (!journalSnap.exists()) {
           setError('Journal not found.');
+          alert('DEBUG: Journal not found - check if journal exists');
           return;
         }
 
         const journalData = journalSnap.data();
         if (!journalData.isPublic) {
           setError('This journal is not publicly shared.');
+          alert('DEBUG: Journal exists but is not public - check share button functionality');
           return;
         }
 
@@ -60,12 +63,17 @@ const SharedPageViewer: React.FC<SharedPageViewerProps> = ({ journalId, pageId, 
 
         // Load page data
         const pageRef = doc(db, 'journals', journalId, 'pages', `page-${pageId}`);
+        console.log('Loading page from:', pageRef.path);
         const pageSnap = await getDoc(pageRef);
 
+        console.log('Page exists:', pageSnap.exists());
         if (pageSnap.exists()) {
           const data = pageSnap.data() as PageData;
+          console.log('Page data:', data);
+          console.log('Canvas image exists:', !!data.canvasImage);
           setPageData(data);
         } else {
+          console.log('Page document does not exist');
           setError('Page not found.');
         }
       } catch (error) {
@@ -108,41 +116,61 @@ const SharedPageViewer: React.FC<SharedPageViewerProps> = ({ journalId, pageId, 
   return (
     <div className="shared-viewer-overlay">
       <div className="shared-viewer">
-        <div className="shared-header">
-          <h1>Shared Page</h1>
-          {onClose && (
-            <button onClick={onClose} className="close-shared-btn">×</button>
-          )}
+        <div className="shared-branding">
+          <a href="/" className="shared-brand-link">
+            <h1 className="shared-brand">footprints</h1>
+          </a>
         </div>
-
-        <div className="shared-page-info">
-          <h2>{journal.title} - Page {pageId}</h2>
-          <p className="shared-notice">This page has been shared publicly for viewing.</p>
+        <div className="shared-attribution">
+          <p>Shared from Footprints</p>
         </div>
-
         <div className="shared-page-content">
-          {pageData?.canvasImage ? (
-            <div className="canvas-screenshot">
-              <img
-                src={pageData.canvasImage}
-                alt={`Page ${pageId} canvas`}
-                style={{
-                  maxWidth: '100%',
-                  height: 'auto',
-                  borderRadius: '0.5rem',
-                  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-                }}
-              />
+          {pageData?.items && pageData.items.length > 0 ? (
+            <div className="shared-canvas-container">
+              <div className="shared-canvas-paper">
+                {pageData.items.map((item: any) => (
+                  <div
+                    key={item.id}
+                    className={`shared-canvas-item ${item.type}-item`}
+                    style={{
+                      left: item.x,
+                      top: item.y,
+                      position: 'absolute'
+                    }}
+                  >
+                    {item.type === 'text' ? (
+                      <div
+                        className="shared-canvas-text"
+                        style={{
+                          fontSize: '1.5rem',
+                          color: '#333',
+                          lineHeight: '1.4'
+                        }}
+                      >
+                        {item.content}
+                      </div>
+                    ) : (
+                      <img
+                        src={item.content}
+                        alt="Canvas image"
+                        className="shared-canvas-image"
+                        style={{
+                          maxWidth: '200px',
+                          maxHeight: '200px',
+                          objectFit: 'contain',
+                          border: 'none'
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="empty-page">
               <p>This page doesn't have any content yet.</p>
             </div>
           )}
-        </div>
-
-        <div className="shared-footer">
-          <p>Shared from Footprints</p>
         </div>
       </div>
     </div>

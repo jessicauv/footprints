@@ -16,7 +16,6 @@ interface PageEditorProps {
   vibes?: string;
   detailedInfo?: string;
   onClose: () => void;
-  onRestart: () => void;
   restaurant?: any;
   generatedImages?: GeneratedImage[];
   onImagesLoaded?: (images: GeneratedImage[]) => void;
@@ -33,7 +32,7 @@ interface DraggableItem {
 
 
 
-const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detailedInfo, onClose, onRestart, restaurant, generatedImages = [], onImagesLoaded }) => {
+const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detailedInfo, onClose, restaurant, generatedImages = [], onImagesLoaded }) => {
   // Static journal component images
   const journalComponentImages = [
     { id: 'flower', url: '/journal-components/flower.png', alt: 'Flower' },
@@ -43,7 +42,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
     { id: 'scrappaper', url: '/journal-components/scrappaper.png', alt: 'Scrap Paper' },
     { id: 'stickynote', url: '/journal-components/stickynote.png', alt: 'Sticky Note' },
     { id: 'tape', url: '/journal-components/tape.png', alt: 'Tape' },
-    { id: 'ticket', url: '/journal-components/ticket.png', alt: 'Ticket' },
+    { id: 'ticket', url: '/journal-components/ticketplain.png', alt: 'Ticket' },
     { id: 'receipt', url: '/journal-components/customizable/receipt.png', alt: 'Receipt' },
     { id: 'custom-ticket', url: '/journal-components/customizable/ticket.png', alt: 'Custom Ticket' },
   ];
@@ -286,6 +285,25 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
     e.target.value = '';
   };
 
+  // Convert image URL to data URL for canvas compatibility
+  const convertImageToDataURL = async (imageUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const dataURL = canvas.toDataURL('image/png');
+        resolve(dataURL);
+      };
+      img.onerror = () => resolve(imageUrl); // Fallback to original URL if conversion fails
+      img.src = imageUrl;
+    });
+  };
+
   const handleDragEnd = async (e: React.DragEvent) => {
     if (draggedItem) {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -294,8 +312,21 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
 
       let content = draggedItem.content;
 
-      // Check if this is a ticket that needs customization
-      const isTicket = draggedItem.id === 'component-ticket' || draggedItem.id === 'component-custom-ticket';
+      // Convert AI-generated images to data URLs for canvas compatibility
+      if (draggedItem.id.startsWith('generated-image-') && typeof content === 'string') {
+        console.log('Converting AI image to data URL:', content.substring(0, 50) + '...');
+        try {
+          const convertedContent = await convertImageToDataURL(content);
+          console.log('Successfully converted to data URL, length:', convertedContent.length);
+          content = convertedContent;
+        } catch (error) {
+          console.warn('Failed to convert image to data URL:', error);
+          // Keep original URL as fallback
+        }
+      }
+
+      // Check if this is a ticket that needs customization (only custom-ticket, not plain ticket)
+      const isTicket = draggedItem.id === 'component-custom-ticket';
       const isReceipt = draggedItem.id === 'component-receipt';
 
       if (isTicket && restaurant?.name) {
@@ -402,17 +433,49 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   // Capture canvas as image
   const captureCanvas = async (): Promise<string | null> => {
     const canvasElement = document.querySelector('.canvas-paper') as HTMLElement;
-    if (!canvasElement) return null;
+    if (!canvasElement) {
+      console.warn('Canvas element not found for capture');
+      return null;
+    }
 
     try {
+      console.log('Capturing canvas screenshot...');
+
+      // Wait for images to load
+      const images = canvasElement.querySelectorAll('img');
+      console.log('Found', images.length, 'images to wait for');
+
+      if (images.length > 0) {
+        const imagePromises = Array.from(images).map(img => {
+          return new Promise<void>((resolve) => {
+            if (img.complete) {
+              resolve();
+            } else {
+              img.onload = () => resolve();
+              img.onerror = () => resolve(); // Don't wait forever on errors
+            }
+          });
+        });
+
+        console.log('Waiting for images to load...');
+        await Promise.all(imagePromises);
+        console.log('All images loaded, proceeding with capture');
+      }
+
+      // Give a small additional delay for rendering
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Simple, reliable screenshot - capture whatever is currently visible
       const canvas = await html2canvas(canvasElement, {
         backgroundColor: 'white',
-        scale: 2, // Higher quality
+        scale: 1, // Standard quality
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false, // Don't allow tainting for security
+        logging: false, // Disable verbose logging
       });
 
       const dataUrl = canvas.toDataURL('image/png');
+      console.log('Canvas captured successfully, data URL length:', dataUrl.length);
       return dataUrl;
     } catch (error) {
       console.error('Error capturing canvas:', error);
@@ -420,46 +483,50 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
     }
   };
 
-  const handleRestart = async () => {
-    try {
-      // Delete the page data from Firestore
-      const pageRef = doc(db, 'journals', journal.id, 'pages', `page-${pageId}`);
-      await deleteDoc(pageRef);
-      console.log('Page data deleted, restarting...');
-      onRestart();
-    } catch (error) {
-      console.error('Error deleting page data:', error);
-    }
-  };
+
 
   // Share this page
   const sharePage = async () => {
+    console.log('Share button clicked for journal:', journal.id, 'page:', pageId);
     try {
       // Share the journal if it's not already shared (required for page access)
       const journalRef = doc(db, 'journals', journal.id);
+      console.log('Checking journal document:', journalRef.path);
       const journalSnap = await getDoc(journalRef);
 
+      console.log('Journal document exists:', journalSnap.exists());
       let journalShared = false;
       if (journalSnap.exists()) {
         const data = journalSnap.data();
-        journalShared = data.isPublic || false;
+        console.log('Journal data:', data);
+        journalShared = data?.isPublic || false;
+        console.log('Journal is currently shared:', journalShared);
+      } else {
+        console.error('Journal document does not exist!');
+        return;
       }
 
       // If journal is not shared, share it first
       if (!journalShared) {
+        console.log('Making journal public...');
         await updateDoc(journalRef, {
           isPublic: true,
           sharedAt: new Date()
         });
+        console.log('Journal successfully made public');
       }
 
       // Generate share link for this specific page
       const currentDomain = window.location.origin;
       const link = `${currentDomain}/shared/journal/${journal.id}/page/${pageId}`;
+      console.log('Generated share link:', link);
       setShareLink(link);
       setShowShareOptions(true);
+      console.log('Share options set to visible, link:', link);
     } catch (error) {
       console.error('Error sharing page:', error);
+      // Show user-friendly error message
+      alert('Failed to share page. Please check your permissions and try again.');
     }
   };
 
@@ -608,9 +675,6 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                 <div className="sidebar-actions">
                   <button onClick={sharePage} className="share-page-btn">
                     📤 Share
-                  </button>
-                  <button onClick={handleRestart} className="restart-btn">
-                    Restart
                   </button>
                 </div>
               </div>
