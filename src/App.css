@@ -775,7 +775,7 @@
 }
 
 .sidebar {
-  width: 250px;
+  width: 350px;
   background-color: #f8f9fa;
   padding: 1rem;
   border-right: 1px solid #ddd;
@@ -791,8 +791,10 @@
 
 .sidebar-items {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .sidebar-item {
@@ -802,6 +804,13 @@
   border-radius: 0.3rem;
   cursor: grab;
   transition: all 0.2s;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.sidebar-item .text-preview {
+  padding: 0.25rem 0;
+  font-size: 1.1rem;
+  line-height: 1.2;
 }
 
 .sidebar-item:hover {
@@ -821,7 +830,7 @@
 }
 
 .image-preview {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   text-align: center;
 }
 
@@ -907,16 +916,29 @@
 
 .canvas-text {
   padding: 0.5rem;
-  background-color: rgba(255, 255, 255, 0.9);
-  border: 1px solid #ddd;
+  font-size: 1.5rem;
+  color: #333;
+  line-height: 1.4;
+  cursor: text;
+  background: transparent;
+  border: none;
+  outline: none;
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.canvas-text-input {
+  padding: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 2px solid #646cff;
   border-radius: 0.3rem;
   font-size: 0.9rem;
   color: #333;
   line-height: 1.4;
-  resize: both;
-  overflow: auto;
-  min-width: 100px;
-  min-height: 30px;
+  min-width: 150px;
+  outline: none;
+  box-shadow: none;
+  text-decoration: none;
 }
 
 .canvas-image {
@@ -1606,6 +1628,24 @@
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
+.generated-by {
+  text-align: left;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.generated-vibes {
+  text-align: left;
+  font-family: 'Montserrat', sans-serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: #28a745;
+  margin-top: 0.25rem;
+}
+
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
@@ -1844,4 +1884,54 @@
   left: 45%;
   transform: translate(-50%, -50%);
   z-index: 2;
+}
+
+/* Loading Overlay for Image Generation */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.loading-content {
+  text-align: center;
+  color: white;
+  max-width: 400px;
+  padding: 2rem;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-content h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.8rem;
+  font-weight: 300;
+}
+
+.loading-content p {
+  margin: 0;
+  font-size: 1rem;
+  opacity: 0.9;
+  line-height: 1.5;
 }

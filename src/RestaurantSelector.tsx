@@ -25,7 +25,7 @@ interface AutocompleteSuggestion {
 }
 
 interface RestaurantSelectorProps {
-  onRestaurantSelect: (restaurant: Restaurant, vibes: string) => void;
+  onRestaurantSelect: (restaurant: Restaurant) => void;
   onClose: () => void;
 }
 
@@ -36,8 +36,7 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
   const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
-  const [vibes, setVibes] = useState('');
-  const [generatingVibes, setGeneratingVibes] = useState(false);
+
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchTimeoutRef = useRef<number | null>(null);
 
@@ -180,63 +179,7 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
     searchRestaurants(suggestion.text);
   };
 
-  // Yelp AI API call to generate vibes
-  const generateVibes = async (restaurant: Restaurant) => {
-    setGeneratingVibes(true);
-    try {
-      const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
-      if (!YELP_API_KEY) {
-        throw new Error('Yelp API key not found. Please set VITE_YELP_API_KEY as an environment variable.');
-      }
 
-      // Use Yelp AI API to generate vibes description
-      const query = `${restaurant.name} restaurant: give me exactly 4 adjectives that describe its atmosphere and vibe. Reply with only the 4 words separated by commas.`;
-
-      const response = await fetch('https://api.yelp.com/ai/chat/v2', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${YELP_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: query,
-          user_context: {
-            locale: 'en_US',
-            latitude: restaurant.coordinates?.latitude || 40.7128, // Default to NYC if no coordinates
-            longitude: restaurant.coordinates?.longitude || -74.0060
-          }
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Yelp AI API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      // Extract the vibes from the AI response
-      // The response might be an object with {text, tags} structure
-      let vibesText = 'Cozy, Authentic, Welcoming, Memorable'; // Default fallback
-
-      if (data.response) {
-        if (typeof data.response === 'string') {
-          vibesText = data.response;
-        } else if (typeof data.response === 'object' && data.response.text) {
-          vibesText = data.response.text;
-        }
-      }
-
-      setVibes(vibesText);
-      return vibesText;
-    } catch (error) {
-      console.error('Error generating vibes:', error);
-      // Fallback to generic vibes if API fails
-      const fallbackVibes = 'Cozy, Authentic, Welcoming, Memorable';
-      setVibes(fallbackVibes);
-      return fallbackVibes;
-    } finally {
-      setGeneratingVibes(false);
-    }
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,16 +191,9 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
     // Vibes will be generated when "Start Journaling" is clicked
   };
 
-  const handleConfirm = async () => {
-    if (selectedRestaurant && !generatingVibes) {
-      setGeneratingVibes(true);
-      try {
-        const vibesText = await generateVibes(selectedRestaurant);
-        onRestaurantSelect(selectedRestaurant, vibesText);
-      } catch (error) {
-        // Fallback to default vibes if generation fails
-        onRestaurantSelect(selectedRestaurant, 'Cozy, Authentic, Welcoming, Memorable');
-      }
+  const handleConfirm = () => {
+    if (selectedRestaurant) {
+      onRestaurantSelect(selectedRestaurant);
     }
   };
 
@@ -346,8 +282,8 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
               <button onClick={() => setSelectedRestaurant(null)} className="back-btn">
                 Back to Search
               </button>
-              <button onClick={handleConfirm} className="confirm-btn" disabled={generatingVibes}>
-                {generatingVibes ? 'Loading page...' : 'Start Journaling'}
+              <button onClick={handleConfirm} className="confirm-btn">
+                Start Journaling
               </button>
             </div>
           </div>
