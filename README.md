@@ -67,6 +67,7 @@ Using the Yelp AI API, it extracts rich, niche details about each business: menu
   <em>Testing Notes</em>
   <ul>
     <li>Yelp API has usage limits - may show default content if quota exceeded</li>
+    <li>Can use test account Em: test@gmail.com, PW: test1234 if you want</li>
     <!--<li>OpenAI DALL-E 3 image generation may take 10-30 seconds per image</li>-->
     <!--<li>Firebase storage has document size limits for gallery sharing</li>-->
   </ul>
