@@ -786,6 +786,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   };
   */
 
+  /*
   const copyShareLink = async () => {
     try {
       await navigator.clipboard.writeText(shareLink);
@@ -794,6 +795,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
       console.error('Error copying link:', error);
     }
   };
+  */
 
   return (
     <div className="page-editor-overlay">
