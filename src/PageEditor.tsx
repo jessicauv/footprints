@@ -28,6 +28,8 @@ interface DraggableItem {
   content: string;
   x: number;
   y: number;
+  width?: number;
+  height?: number;
   editable?: boolean;
 }
 
@@ -170,6 +172,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [draggingItem, setDraggingItem] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizingItem, setResizingItem] = useState<string | null>(null);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
 
   // Load page content from Firestore
@@ -371,12 +376,24 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
         content = draggedItem.type === 'text' && draggedItem.content !== vibes && draggedItem.content !== `⭐ ${restaurant?.rating || ''}` ? '' : draggedItem.content;
       }
 
+      // Set default sizes - make photostrip larger
+      let defaultWidth = draggedItem.type === 'text' ? 200 : 150;
+      let defaultHeight = draggedItem.type === 'text' ? 50 : 150;
+
+      // Special case for photostrip - make it larger
+      if (draggedItem.id === 'component-photostrip') {
+        defaultWidth = 300;
+        defaultHeight = 200;
+      }
+
       const newItem: DraggableItem = {
         ...draggedItem,
         x,
         y,
         id: `${draggedItem.id}-${Date.now()}`, // Make unique
         content,
+        width: draggedItem.width || defaultWidth,
+        height: draggedItem.height || defaultHeight,
         editable: draggedItem.content !== vibes && draggedItem.content !== `⭐ ${restaurant?.rating || ''}`, // Vibes and rating text are not editable
       };
 
@@ -430,6 +447,11 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (resizingItem) {
+      handleResizeMove(e);
+      return;
+    }
+
     if (!draggingItem) return;
 
     const canvasRect = document.querySelector('.canvas-paper')?.getBoundingClientRect();
@@ -449,6 +471,44 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
 
   const handleMouseUp = () => {
     setDraggingItem(null);
+    setResizingItem(null);
+  };
+
+  const handleResizeStart = (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    const item = canvasItems.find(item => item.id === itemId);
+    if (!item) return;
+
+    setResizingItem(itemId);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: item.width || 150,
+      height: item.height || 150
+    });
+
+    e.preventDefault();
+  };
+
+  const handleResizeMove = (e: React.MouseEvent) => {
+    if (!resizingItem) return;
+
+    const item = canvasItems.find(item => item.id === resizingItem);
+    if (!item) return;
+
+    const deltaX = e.clientX - resizeStart.x;
+    const deltaY = e.clientY - resizeStart.y;
+
+    const newWidth = Math.max(50, resizeStart.width + deltaX);
+    const newHeight = Math.max(50, resizeStart.height + deltaY);
+
+    setCanvasItems(items =>
+      items.map(i =>
+        i.id === resizingItem
+          ? { ...i, width: newWidth, height: newHeight }
+          : i
+      )
+    );
   };
 
   // Capture canvas as image
@@ -680,10 +740,14 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                   style={{
                     left: item.x,
                     top: item.y,
+                    width: item.width || (item.type === 'text' ? 200 : 150),
+                    height: item.height || (item.type === 'text' ? 50 : 150),
                     cursor: editingTextId === item.id ? 'text' : (item.editable !== false ? 'move' : 'default')
                   }}
                   onMouseDown={(e) => handleMouseDown(e, item.id)}
                   onDoubleClick={() => deleteItem(item.id)}
+                  onMouseEnter={() => setHoveredItem(item.id)}
+                  onMouseLeave={() => setHoveredItem(null)}
                 >
                   {item.type === 'text' ? (
                     editingTextId === item.id ? (
@@ -703,7 +767,10 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                     ) : (
                       <div
                         className="canvas-text"
-                        onClick={() => item.editable !== false && startEditingText(item.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          item.editable !== false && startEditingText(item.id);
+                        }}
                       >
                         {item.content || (item.editable !== false ? 'Click to edit text' : '')}
                       </div>
@@ -714,13 +781,33 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                       alt="Uploaded image"
                       className="canvas-image"
                       style={{
-                        maxWidth: '200px',
-                        maxHeight: '200px',
+                        width: '100%',
+                        height: '100%',
                         objectFit: 'contain',
                         border: 'none',
                         pointerEvents: 'none'
                       }}
                     />
+                  )}
+
+                  {/* Resize handles - only show when hovered and not editing text */}
+                  {hoveredItem === item.id && item.editable !== false && !editingTextId && (
+                    <div className="resize-handles">
+                      <div
+                        className="resize-handle se"
+                        onMouseDown={(e) => handleResizeStart(e, item.id)}
+                        style={{
+                          position: 'absolute',
+                          right: '-4px',
+                          bottom: '-4px',
+                          width: '8px',
+                          height: '8px',
+                          background: '#646cff',
+                          cursor: 'nw-resize',
+                          borderRadius: '50%'
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
               ))}
