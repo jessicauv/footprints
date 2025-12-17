@@ -24,11 +24,13 @@ const Homepage: React.FC<HomepageProps> = ({ onGoToLogin }) => {
           <h2 className="subtitle-card-overlay">Document Your Adventures</h2>
         </div>
 
+        {/*
         <div className="gallery-link-container">
           <a href="/gallery" className="gallery-link">
           View Journal Gallery
           </a>
         </div>
+        */}
       </div>
 
       {/* {showApiWarning && (

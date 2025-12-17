@@ -1008,6 +1008,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                 <div className="editor-instructions">
                   <p>Double-click items to delete them. Drag from sidebar to add.</p>
                 </div>
+                {/*
                 <div className="sidebar-actions">
                   <button onClick={sharePage} className="share-page-btn">
                     📤 Share
@@ -1016,6 +1017,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                     🖼️ Share to Gallery
                   </button>
                 </div>
+                */}
+
                 <p className="powered-by-yelp" style={{ fontFamily: 'Montserrat, sans-serif', marginTop: '16px' }}>Powered by Yelp AI API</p>
               </div>
             </div>
