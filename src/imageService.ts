@@ -84,13 +84,13 @@ export class ImageService {
 
     // Add menu item prompts
     menuItems.forEach(item => {
-      prompts.push(`Generate a single, cartoon-style sticker of the menu item ${item}.
+    prompts.push(`Generate a single, cartoon-style image of the menu item ${item}.
 
 The image should feature only this menu item.
 
 Use a solid background color that contrasts well with the item.
 
-Style should be cute, aesthetic, journal-friendly, and sticker-like, like something you could place in a digital journal.
+Style should be cute and cartoon-like.
 
 No text or logos (except very minimal, optional small label if necessary).
 
@@ -103,6 +103,33 @@ No extra objects, clutter, or background details.`);
     return prompts;
   }
 
+  // Convert image URL to data URL for local storage
+  private async convertImageToDataURL(imageUrl: string): Promise<string> {
+    try {
+      console.log('📥 Downloading image from Azure:', imageUrl);
+      const response = await fetch(imageUrl);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataURL = reader.result as string;
+          console.log('✅ Image converted to data URL, size:', dataURL.length, 'characters');
+          resolve(dataURL);
+        };
+        reader.onerror = () => reject(new Error('Failed to convert blob to data URL'));
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('❌ Error converting image to data URL:', error);
+      throw error;
+    }
+  }
+
   async generateImagesFromPrompts(prompts: string[]): Promise<GeneratedImage[]> {
     if (!this.openai) {
       console.warn('OpenAI API not initialized - cannot generate images');
@@ -113,7 +140,7 @@ No extra objects, clutter, or background details.`);
 
     const imagePromises = prompts.map(async (prompt, index) => {
       try {
-        console.log(`🖼️ Generating image ${index + 1}/3: "${prompt}"`);
+        console.log(`🖼️ Generating image ${index + 1}/3: "${prompt.substring(0, 50)}..."`);
         const response = await this.openai!.images.generate({
           model: "dall-e-3",
           prompt: prompt,
@@ -122,21 +149,34 @@ No extra objects, clutter, or background details.`);
           n: 1,
         });
 
-        const imageUrl = response.data?.[0]?.url;
-        if (!imageUrl) {
+        const azureImageUrl = response.data?.[0]?.url;
+        if (!azureImageUrl) {
           throw new Error(`No image URL returned for prompt ${index + 1}`);
         }
 
-        console.log(`✅ Image ${index + 1} generated:`, imageUrl);
+        console.log(`✅ Image ${index + 1} generated from Azure:`, azureImageUrl.substring(0, 50) + '...');
+
+        // Convert the Azure URL to a local data URL
+        const dataUrl = await this.convertImageToDataURL(azureImageUrl);
+
         return {
-          url: imageUrl,
+          url: dataUrl,
           prompt: prompt
         };
       } catch (error) {
         console.error(`❌ Error generating image ${index + 1}:`, error);
-        // Return placeholder on error
+        // Return a simple placeholder data URL on error
+        const placeholderDataUrl = `data:image/svg+xml;base64,${btoa(`
+          <svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+            <rect width="512" height="512" fill="#f0f0f0"/>
+            <text x="256" y="256" text-anchor="middle" dy="0.35em" font-family="Arial" font-size="24" fill="#666">
+              Error ${index + 1}
+            </text>
+          </svg>
+        `)}`;
+
         return {
-          url: `https://via.placeholder.com/512x512.png?text=Error+${index + 1}`,
+          url: placeholderDataUrl,
           prompt: prompt
         };
       }
@@ -144,7 +184,7 @@ No extra objects, clutter, or background details.`);
 
     try {
       const results = await Promise.all(imagePromises);
-      console.log('🎉 All images generated successfully!', results.length, 'images');
+      console.log('🎉 All images generated and converted successfully!', results.length, 'images');
       return results;
     } catch (error) {
       console.error('❌ Error generating images:', error);

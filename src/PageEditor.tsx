@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { doc, getDoc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
 import { type GeneratedImage } from './imageService';
+import YelpStars, { getYelpStarsImageUrl } from './YelpStars';
 
 interface PageEditorProps {
   journal: {
@@ -182,7 +183,27 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
         if (pageSnap.exists()) {
           const data = pageSnap.data();
           console.log('Loaded page data:', data);
-          setCanvasItems(data.items || []);
+
+          // Handle backward compatibility: convert old text-based ratings to image-based
+          let items = data.items || [];
+          items = items.map((item: DraggableItem) => {
+            // Check if this is an old text rating item (e.g., "⭐ 4.5")
+            if (item.type === 'text' && item.content && item.content.startsWith('⭐ ')) {
+              const ratingMatch = item.content.match(/^⭐ (\d+(?:\.\d+)?)$/);
+              if (ratingMatch) {
+                const rating = parseFloat(ratingMatch[1]);
+                return {
+                  ...item,
+                  type: 'image' as const,
+                  content: getYelpStarsImageUrl(rating),
+                  editable: false // Yelp stars are not editable
+                };
+              }
+            }
+            return item;
+          });
+
+          setCanvasItems(items);
 
           // Load existing generated images if available and notify parent
           if (data.generatedImages && onImagesLoaded) {
@@ -246,7 +267,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
     { id: 'text', type: 'text' as const, content: 'Add Text' },
     { id: 'image', type: 'upload' as const, content: 'Add Image' },
     ...(vibes ? [{ id: 'vibes', type: 'text' as const, content: vibes }] : []),
-    ...(restaurant?.rating ? [{ id: 'rating', type: 'text' as const, content: `⭐ ${restaurant.rating}` }] : []),
+    ...(restaurant?.rating ? [{ id: 'rating', type: 'image' as const, content: getYelpStarsImageUrl(restaurant.rating) }] : []),
     ...generatedImages.map((image, index) => ({
       id: `generated-image-${index}`,
       type: 'image' as const,
@@ -312,9 +333,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
 
       let content = draggedItem.content;
 
-      // Convert AI-generated images to data URLs for canvas compatibility
-      if (draggedItem.id.startsWith('generated-image-') && typeof content === 'string') {
-        console.log('Converting AI image to data URL:', content.substring(0, 50) + '...');
+      // Convert AI-generated images and Yelp stars to data URLs for canvas compatibility
+      if ((draggedItem.id.startsWith('generated-image-') || draggedItem.id === 'rating') && typeof content === 'string') {
+        console.log('Converting image to data URL:', content.substring(0, 50) + '...');
         try {
           const convertedContent = await convertImageToDataURL(content);
           console.log('Successfully converted to data URL, length:', convertedContent.length);
@@ -509,11 +530,17 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
       // If journal is not shared, share it first
       if (!journalShared) {
         console.log('Making journal public...');
-        await updateDoc(journalRef, {
-          isPublic: true,
-          sharedAt: new Date()
-        });
-        console.log('Journal successfully made public');
+        try {
+          await updateDoc(journalRef, {
+            isPublic: true,
+            sharedAt: new Date()
+          });
+          console.log('Journal successfully made public');
+        } catch (updateError) {
+          console.error('Failed to make journal public:', updateError);
+          alert('Failed to share journal. You may not have permission to share this journal, or there may be a database issue.');
+          return;
+        }
       }
 
       // Generate share link for this specific page
@@ -663,8 +690,23 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
               <div className="restaurant-info">
                 <h3>{restaurant.name}</h3>
                 <p>{restaurant.location?.address1}, {restaurant.location?.city}</p>
-                <div className="restaurant-meta">
-                  ⭐ {restaurant.rating} ({restaurant.review_count} reviews) • {restaurant.categories?.map((c: any) => c.title).join(', ')}
+                <div className="restaurant-rating">
+                  <YelpStars rating={restaurant.rating} />
+                  {/* Debug: {restaurant.rating} */}
+                </div>
+                <div className="restaurant-reviews">
+                  Based on {restaurant.review_count} reviews
+                  <img
+                    src="/yelp_logo.png"
+                    alt="Yelp"
+                    className="yelp-logo"
+                    style={{ height: '28px', marginLeft: '8px', verticalAlign: 'middle', cursor: 'pointer' }}
+                    onClick={() => restaurant?.url && window.open(restaurant.url, '_blank')}
+                    title="View on Yelp"
+                  />
+                </div>
+                <div className="restaurant-categories">
+                  {restaurant.categories?.map((c: any) => c.title).join(', ')}
                 </div>
               </div>
               <div className="page-info-sidebar">
@@ -677,6 +719,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                     📤 Share
                   </button>
                 </div>
+                <p className="powered-by-yelp" style={{ fontFamily: 'Montserrat, sans-serif' }}>Powered by Yelp AI API</p>
               </div>
             </div>
           )}

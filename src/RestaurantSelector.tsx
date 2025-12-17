@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import YelpStars from './YelpStars';
 
 interface Restaurant {
   id: string;
@@ -254,7 +255,7 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
                   <div className="restaurant-info">
                     <h3>{restaurant.name}</h3>
                     <div className="restaurant-meta">
-                      <span className="rating">⭐ {restaurant.rating}</span>
+                      <span className="rating"><YelpStars rating={restaurant.rating} /></span>
                       <span className="reviews">({restaurant.review_count} reviews)</span>
                     </div>
                     <div className="restaurant-address">
