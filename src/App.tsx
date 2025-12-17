@@ -43,7 +43,7 @@ function MainApp() {
 
   // Yelp AI API call to generate vibes
   // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
-  const generateVibes = async (restaurant: any) => {
+  const generateVibes = async (_restaurant: any) => {
     // return default values to save API credits
     return 'Cozy, Authentic, Welcoming';
 
@@ -104,7 +104,7 @@ function MainApp() {
 
   // Yelp AI API call to generate detailed restaurant information
   // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
-  const generateDetailedInfo = async (restaurant: any) => {
+  const generateDetailedInfo = async (_restaurant: any) => {
     // return default values to save API credits
     return 'Detailed information not available.';
 
@@ -172,7 +172,7 @@ Do not include a full address or any visual description.`;
 
   // Yelp AI API call to generate menu/service items
   // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
-  const generateMenuItems = async (restaurant: any) => {
+  const generateMenuItems = async (_restaurant: any) => {
     // return default values to save API credits
     return 'McDonald\'s fries\nMcDonald\'s burger\nvanilla milkshake';
 
