@@ -628,6 +628,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
 
 
   // Share this page
+  /*
   const sharePage = async () => {
     console.log('Share button clicked for journal:', journal.id, 'page:', pageId);
     try {
@@ -785,6 +786,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
       alert(`Failed to share to gallery: ${errorMessage}`);
     }
   };
+  */
 
   const copyShareLink = async () => {
     try {
