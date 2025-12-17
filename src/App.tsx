@@ -5,8 +5,8 @@ import Bookshelf from './Bookshelf';
 import BookViewer from './BookViewer';
 import PageEditor from './PageEditor';
 import RestaurantSelector from './RestaurantSelector';
-
 import SharedPageViewer from './SharedPageViewer';
+import Homepage from './Homepage';
 import { useState } from 'react';
 import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 
@@ -18,7 +18,7 @@ interface Journal {
   color?: string;
 }
 
-// Main App Content Component (requires authentication)
+// Main App Content Component
 function MainApp() {
   const { user, loading, logout } = useAuth();
   const [selectedJournal, setSelectedJournal] = useState<Journal | null>(null);
@@ -26,6 +26,8 @@ function MainApp() {
   const [pageVibes, setPageVibes] = useState<string | null>(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
   const [showRestaurantSelector, setShowRestaurantSelector] = useState(false);
+  const [showHomepage, setShowHomepage] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
 
   const handleRestaurantSelect = (restaurant: any, vibes: string) => {
     setSelectedRestaurant(restaurant);
@@ -64,23 +66,30 @@ function MainApp() {
   }
 
   if (!user) {
-    return (
-      <div className="app">
-        <h1>Footprints</h1>
-        <p className="subtitle">Add footprints everywhere you go!</p>
-        <AuthForm />
-      </div>
-    );
+    if (showHomepage) {
+      return <Homepage onGoToLogin={() => {
+        setShowHomepage(false);
+        setShowLogin(true);
+      }} />;
+    } else if (showLogin) {
+      return (
+        <div className="app">
+          <h1>footprints</h1>
+          <p className="subtitle">Add footprints everywhere you go!</p>
+          <AuthForm />
+        </div>
+      );
+    }
   }
 
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Footprints</h1>
+        <h1>footprints</h1>
         <button onClick={logout} className="logout-btn">Logout</button>
       </header>
       <main>
-        <p className="subtitle">Welcome, {user.email}! Add footprints everywhere you go!</p>
+        <p className="subtitle">Welcome, {user?.email}! Add footprints everywhere you go!</p>
         {showRestaurantSelector && selectedJournal && selectedPage ? (
           <RestaurantSelector
             onRestaurantSelect={handleRestaurantSelect}

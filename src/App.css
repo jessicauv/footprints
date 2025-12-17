@@ -1585,3 +1585,112 @@
   color: #666;
   margin-bottom: 2em;
 }
+
+/* Homepage Styles */
+.homepage {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: url('/background.png') no-repeat center center fixed;
+  background-size: cover;
+  margin: 0;
+  padding: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.homepage-content {
+  text-align: center;
+  color: white;
+  max-width: 600px;
+}
+
+.title-image-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.title-image-container:hover {
+  transform: scale(1.02);
+}
+
+.title-card-image {
+  max-width: 100%;
+  height: auto;
+  max-height: 800px;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.title-text-overlay {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4rem;
+  font-weight: bold;
+  color: black;
+  font-family: 'Beth Ellen', cursive;
+  margin: 0;
+  z-index: 2;
+  text-align: center;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  text-decoration: none !important;
+  border-radius: 0 !important;
+}
+
+.subtitle-card-image {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 80%;
+  height: auto;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 3;
+}
+
+.subtitle-card-overlay {
+  position: absolute;
+  bottom: 6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.5rem;
+  font-weight: normal;
+  color: black;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+  font-family: 'Special Elite', cursive;
+  margin: 0;
+  z-index: 4;
+  text-align: center;
+  white-space: nowrap;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  text-decoration: none !important;
+  border-radius: 0 !important;
+}
