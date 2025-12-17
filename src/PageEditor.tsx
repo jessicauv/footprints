@@ -205,28 +205,10 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
   return (
     <div className="page-editor-overlay">
       <div className="page-editor">
-        <div className="editor-header">
-          <div className="page-info">
-            <h2>Editing Page {pageId} - {journal.title}</h2>
-            {restaurant && (
-              <div className="restaurant-info">
-                <h3>{restaurant.name}</h3>
-                <p>{restaurant.location?.address1}, {restaurant.location?.city}</p>
-                <div className="restaurant-meta">
-                  ⭐ {restaurant.rating} ({restaurant.review_count} reviews) • {restaurant.categories?.map((c: any) => c.title).join(', ')}
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="editor-actions">
-            <button onClick={sharePage} className="share-page-btn">
-              📤 Share Page
-            </button>
-            <button onClick={handleRestart} className="restart-btn">
-              Change Restaurant
-            </button>
-            <button onClick={onClose} className="close-editor-btn">×</button>
-          </div>
+        <div className="journal-title-header">
+          <div></div>
+          <h1 className="journal-title">{journal.title}</h1>
+          <button onClick={onClose} className="close-editor-btn">×</button>
         </div>
 
         <div className="editor-content">
@@ -275,7 +257,35 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
               ))}
             </div>
           </div>
+
+          {restaurant && (
+            <div className="restaurant-sidebar">
+              <div className="restaurant-info">
+                <h3>{restaurant.name}</h3>
+                <p>{restaurant.location?.address1}, {restaurant.location?.city}</p>
+                <div className="restaurant-meta">
+                  ⭐ {restaurant.rating} ({restaurant.review_count} reviews) • {restaurant.categories?.map((c: any) => c.title).join(', ')}
+                </div>
+              </div>
+              <div className="page-info-sidebar">
+                <p className="page-number">{pageId}</p>
+                <div className="editor-instructions">
+                  <p>Double-click items to delete them. Drag from sidebar to add.</p>
+                </div>
+                <div className="sidebar-actions">
+                  <button onClick={sharePage} className="share-page-btn">
+                    📤 Share
+                  </button>
+                  <button onClick={handleRestart} className="restart-btn">
+                    Restart
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
+
 
         {showShareOptions && (
           <div className="share-options">
@@ -300,9 +310,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, onClose
           </div>
         )}
 
-        <div className="editor-footer">
-          <p>Double-click items to delete them. Drag from sidebar to add.</p>
-        </div>
+
+
+
       </div>
     </div>
   );

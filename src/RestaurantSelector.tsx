@@ -245,13 +245,19 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
 
   const handleRestaurantSelect = async (restaurant: Restaurant) => {
     setSelectedRestaurant(restaurant);
-    const vibesText = await generateVibes(restaurant);
-    setVibes(vibesText);
+    // Vibes will be generated when "Start Journaling" is clicked
   };
 
-  const handleConfirm = () => {
-    if (selectedRestaurant && vibes) {
-      onRestaurantSelect(selectedRestaurant, vibes);
+  const handleConfirm = async () => {
+    if (selectedRestaurant && !generatingVibes) {
+      setGeneratingVibes(true);
+      try {
+        const vibesText = await generateVibes(selectedRestaurant);
+        onRestaurantSelect(selectedRestaurant, vibesText);
+      } catch (error) {
+        // Fallback to default vibes if generation fails
+        onRestaurantSelect(selectedRestaurant, 'Cozy, Authentic, Welcoming, Memorable');
+      }
     }
   };
 
@@ -259,7 +265,7 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
     <div className="restaurant-selector-overlay">
       <div className="restaurant-selector">
         <div className="selector-header">
-          <h2>Select a Restaurant to Journal About</h2>
+          <h2>Select a Place to Journal About</h2>
           <button onClick={onClose} className="close-selector-btn">×</button>
         </div>
 
@@ -272,7 +278,7 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
                     type="text"
                     value={searchTerm}
                     onChange={(e) => handleSearchInput(e.target.value)}
-                    placeholder="Search for restaurants..."
+                    placeholder="Search for a place"
                     className="search-input"
                   />
                   {showSuggestions && suggestions.length > 0 && (
@@ -341,7 +347,7 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
                 Back to Search
               </button>
               <button onClick={handleConfirm} className="confirm-btn" disabled={generatingVibes}>
-                Start Journaling
+                {generatingVibes ? 'Loading page...' : 'Start Journaling'}
               </button>
             </div>
           </div>
