@@ -202,7 +202,90 @@ const Gallery: React.FC = () => {
           <div className="gallery-modal" onClick={(e) => e.stopPropagation()}>
             <button className="gallery-close-btn" onClick={closeModal}>×</button>
             <div className="gallery-modal-preview-container">
-              {renderGalleryPreview(selectedItem)}
+              {(() => {
+                // Render a larger version for the modal
+                const modalScale = 0.8; // Larger scale for modal view
+                if (!selectedItem.pageItems || selectedItem.pageItems.length === 0) {
+                  return (
+                    <div className="gallery-preview-empty">
+                      <p>No content</p>
+                    </div>
+                  );
+                }
+                return (
+                  <div
+                    className="gallery-preview-canvas"
+                    style={{
+                      width: '800px',
+                      height: '600px',
+                      transform: `scale(${modalScale}) translateX(30px)`,
+                      transformOrigin: 'top left',
+                      position: 'relative',
+                      backgroundColor: 'white',
+                      border: '1px solid #e0e0e0'
+                    }}
+                  >
+                    {selectedItem.pageItems.map((pageItem: any) => (
+                      <div
+                        key={pageItem.id}
+                        className={`gallery-preview-item ${pageItem.type}-item`}
+                        style={{
+                          left: pageItem.x,
+                          top: pageItem.y,
+                          width: pageItem.width || (pageItem.type === 'text' ? 200 : 150),
+                          height: pageItem.height || (pageItem.type === 'text' ? 50 : 150),
+                          transform: pageItem.rotation ? `rotate(${pageItem.rotation}deg)` : undefined,
+                          transformOrigin: 'center center',
+                          position: 'absolute'
+                        }}
+                      >
+                        {pageItem.type === 'text' ? (
+                          <div
+                            className="gallery-preview-text"
+                            style={{
+                              fontSize: '18px', // Larger text for modal
+                              color: '#333',
+                              lineHeight: '1.2',
+                              whiteSpace: 'pre-wrap'
+                            }}
+                          >
+                            {pageItem.content}
+                          </div>
+                        ) : (
+                          <img
+                            src={pageItem.content}
+                            alt="Preview image"
+                            className="gallery-preview-image"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain',
+                              border: 'none'
+                            }}
+                            onError={(e) => {
+                              // Handle CORS errors for DALL-E images by showing placeholder
+                              const target = e.target as HTMLImageElement;
+                              if (target.src.includes('oaidalleapiprodscus.blob.core.windows.net')) {
+                                target.src = `data:image/svg+xml;base64,${btoa(`
+                                  <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="200" height="200" fill="#e3f2fd"/>
+                                    <text x="100" y="90" text-anchor="middle" font-family="Arial" font-size="14" fill="#1976d2">
+                                      AI Image
+                                    </text>
+                                    <text x="100" y="110" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">
+                                      (CORS blocked)
+                                    </text>
+                                  </svg>
+                                `)}`;
+                              }
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
             <div className="gallery-modal-info">
               {selectedItem.restaurant && (
