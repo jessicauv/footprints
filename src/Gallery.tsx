@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, doc, getDoc } from 'firebase/firestore';
 
 interface GalleryItem {
   id: string;
@@ -9,6 +9,7 @@ interface GalleryItem {
   pageId: string;
   createdAt: Date;
   restaurant?: any;
+  pageItems?: any[]; // Live page items for rendering
 }
 
 const Gallery: React.FC = () => {
@@ -24,15 +25,17 @@ const Gallery: React.FC = () => {
         const querySnapshot = await getDocs(q);
 
         const items: GalleryItem[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
+        querySnapshot.forEach((galleryDoc) => {
+          const data = galleryDoc.data();
+
           items.push({
-            id: doc.id,
+            id: galleryDoc.id,
             imageUrl: data.imageUrl,
             journalId: data.journalId,
             pageId: data.pageId,
             createdAt: data.createdAt?.toDate() || new Date(),
-            restaurant: data.restaurant
+            restaurant: data.restaurant,
+            pageItems: data.pageItems || [] // Use stored page items
           });
         });
 
@@ -53,6 +56,94 @@ const Gallery: React.FC = () => {
 
   const closeModal = () => {
     setSelectedItem(null);
+  };
+
+  // Render a live preview of the gallery item
+  const renderGalleryPreview = (item: GalleryItem) => {
+    if (!item.pageItems || item.pageItems.length === 0) {
+      return (
+        <div className="gallery-preview-empty">
+          <p>No content</p>
+        </div>
+      );
+    }
+
+    // Scale down the canvas for preview to fit container height
+    const scale = 0.45;
+
+    return (
+      <div
+        className="gallery-preview-canvas"
+        style={{
+          width: '800px',
+          height: '600px',
+          transform: `scale(${scale}) translateX(30px)`,
+          transformOrigin: 'top left',
+          position: 'relative',
+          backgroundColor: 'white',
+          border: '1px solid #e0e0e0'
+        }}
+      >
+        {item.pageItems.map((pageItem: any) => (
+          <div
+            key={pageItem.id}
+            className={`gallery-preview-item ${pageItem.type}-item`}
+            style={{
+              left: pageItem.x,
+              top: pageItem.y,
+              width: pageItem.width || (pageItem.type === 'text' ? 200 : 150),
+              height: pageItem.height || (pageItem.type === 'text' ? 50 : 150),
+              transform: pageItem.rotation ? `rotate(${pageItem.rotation}deg)` : undefined,
+              transformOrigin: 'center center',
+              position: 'absolute'
+            }}
+          >
+            {pageItem.type === 'text' ? (
+              <div
+                className="gallery-preview-text"
+                style={{
+                  fontSize: '14px',
+                  color: '#333',
+                  lineHeight: '1.2',
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                {pageItem.content}
+              </div>
+            ) : (
+              <img
+                src={pageItem.content}
+                alt="Preview image"
+                className="gallery-preview-image"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  border: 'none'
+                }}
+                onError={(e) => {
+                  // Handle CORS errors for DALL-E images by showing placeholder
+                  const target = e.target as HTMLImageElement;
+                  if (target.src.includes('oaidalleapiprodscus.blob.core.windows.net')) {
+                    target.src = `data:image/svg+xml;base64,${btoa(`
+                      <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" fill="#e3f2fd"/>
+                        <text x="50" y="45" text-anchor="middle" font-family="Arial" font-size="10" fill="#1976d2">
+                          AI Image
+                        </text>
+                        <text x="50" y="60" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">
+                          (CORS blocked)
+                        </text>
+                      </svg>
+                    `)}`;
+                  }
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    );
   };
 
   if (loading) {
@@ -91,23 +182,16 @@ const Gallery: React.FC = () => {
               className="gallery-item"
               onClick={() => openItem(item)}
             >
-              <img
-                src={item.imageUrl}
-                alt={`Shared journal page from ${item.restaurant?.name || 'Unknown'}`}
-                className="gallery-image"
-              />
-              <div className="gallery-overlay">
-                <div className="gallery-info">
-                  {item.restaurant && (
-                    <div className="restaurant-badge">
-                      📍 {item.restaurant.name}
-                    </div>
-                  )}
-                  <div className="date-badge">
-                    {item.createdAt.toLocaleDateString()}
+              <div className="gallery-preview-container">
+                {renderGalleryPreview(item)}
+              </div>
+              {item.restaurant && (
+                <div className="gallery-item-info">
+                  <div className="gallery-restaurant-name">
+                    📍 {item.restaurant.name}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           ))}
         </div>
@@ -117,11 +201,9 @@ const Gallery: React.FC = () => {
         <div className="gallery-modal-overlay" onClick={closeModal}>
           <div className="gallery-modal" onClick={(e) => e.stopPropagation()}>
             <button className="gallery-close-btn" onClick={closeModal}>×</button>
-            <img
-              src={selectedItem.imageUrl}
-              alt="Shared journal page"
-              className="gallery-modal-image"
-            />
+            <div className="gallery-modal-preview-container">
+              {renderGalleryPreview(selectedItem)}
+            </div>
             <div className="gallery-modal-info">
               {selectedItem.restaurant && (
                 <div className="modal-restaurant">

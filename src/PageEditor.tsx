@@ -613,7 +613,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
         backgroundColor: 'white',
         scale: 1, // Standard quality
         useCORS: true,
-        allowTaint: false, // Don't allow tainting for security
+        allowTaint: true, // Allow tainting to handle CORS-restricted DALL-E images
         logging: false, // Disable verbose logging
       });
 
@@ -761,13 +761,14 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
       console.log('Canvas captured successfully, image length:', canvasImage.length);
 
       console.log('Attempting to add to gallery collection...');
-      // Add to gallery collection
+      // Add to gallery collection (include page items for live rendering)
       const galleryRef = collection(db, 'gallery');
       await addDoc(galleryRef, {
         imageUrl: canvasImage,
         journalId: journal.id,
         pageId: pageId,
         restaurant: restaurant || null,
+        pageItems: canvasItems, // Include the actual page items for gallery rendering
         createdAt: new Date()
       });
 
