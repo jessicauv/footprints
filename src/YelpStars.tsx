@@ -32,7 +32,7 @@ const YelpStars: React.FC<YelpStarsProps> = ({ rating, size = 'large_32', classN
     return '0';
   };
 
-  const filename = `Review_Ribbon_${size}_${getRatingFilename(rating)}@1x.png`;
+  const filename = `Review_Ribbon_${size}_${getRatingFilename(rating)}@2x.png`;
   const imagePath = `/ReviewRibbon_v2/Desktop/${size}/${filename}`;
 
   return (

@@ -527,40 +527,23 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
         return;
       }
 
-      // If journal is not shared, share it first
-      if (!journalShared) {
-        console.log('Making journal public...');
-        try {
-          await updateDoc(journalRef, {
-            isPublic: true,
-            sharedAt: new Date()
-          });
-          console.log('Journal successfully made public');
-
-          // Add this page to the gallery
-          try {
-            const canvasImage = await captureCanvas();
-            if (canvasImage) {
-              const galleryRef = collection(db, 'gallery');
-              await addDoc(galleryRef, {
-                imageUrl: canvasImage,
-                journalId: journal.id,
-                pageId: pageId,
-                restaurant: restaurant || null,
-                createdAt: new Date()
-              });
-              console.log('Page added to gallery successfully');
-            }
-          } catch (galleryError) {
-            console.error('Failed to add page to gallery:', galleryError);
-            // Don't block sharing if gallery fails
-          }
-        } catch (updateError) {
-          console.error('Failed to make journal public:', updateError);
-          alert('Failed to share journal. You may not have permission to share this journal, or there may be a database issue.');
-          return;
-        }
+    // If journal is not shared, share it first
+    if (!journalShared) {
+      console.log('Making journal public...');
+      try {
+        await updateDoc(journalRef, {
+          isPublic: true,
+          sharedAt: new Date()
+        });
+        console.log('Journal successfully made public');
+      } catch (updateError) {
+        console.error('Failed to make journal public:', updateError);
+        alert('Failed to share journal. You may not have permission to share this journal, or there may be a database issue.');
+        return;
       }
+    }
+
+
 
       // Generate share link for this specific page
       const currentDomain = window.location.origin;
