@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase';
-import { doc, getDoc, setDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
 import { type GeneratedImage } from './imageService';
 import YelpStars, { getYelpStarsImageUrl } from './YelpStars';
@@ -167,8 +167,6 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   };
   const [canvasItems, setCanvasItems] = useState<DraggableItem[]>([]);
   const [draggedItem, setDraggedItem] = useState<DraggableItem | null>(null);
-  const [showShareOptions, setShowShareOptions] = useState(false);
-  const [shareLink, setShareLink] = useState('');
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [draggingItem, setDraggingItem] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -1029,6 +1027,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
 
 
 
+        {/*
         {showShareOptions && (
           <div className="share-options">
             <p>Share this page of your journal:</p>
@@ -1051,6 +1050,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
             </button>
           </div>
         )}
+        */}
 
 
 
