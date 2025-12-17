@@ -68,12 +68,11 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
         ctx.drawImage(img, 0, 0);
 
         // Add restaurant name and address text overlay
-        ctx.fillStyle = '#000000'; // Black color
+        ctx.fillStyle = '#000000';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
 
-        // Position text more to the right
-        const textX = 550; // 550px from left edge
+        const textX = 550;
         const centerY = canvas.height / 2;
 
         // Add text shadow for better visibility
@@ -126,13 +125,13 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
         ctx.drawImage(img, 0, 0);
 
         // Add restaurant name and address text overlay
-        ctx.fillStyle = '#000000'; // Black color
+        ctx.fillStyle = '#000000';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
 
         // Position text higher up and more to the right
-        const textX = 450; // 450px from left edge (moved right)
-        const centerY = canvas.height / 2 - 200; // Moved 200px higher
+        const textX = 450;
+        const centerY = canvas.height / 2 - 200;
 
         // Add text shadow for better visibility
         ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';

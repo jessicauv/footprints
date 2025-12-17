@@ -15,7 +15,7 @@ export class ImageService {
     if (apiKey) {
       this.openai = new OpenAI({
         apiKey: apiKey,
-        dangerouslyAllowBrowser: true // Note: In production, API calls should be made from backend
+        dangerouslyAllowBrowser: true // TODO: move API call to backend instead
       });
       console.log('✅ OpenAI API initialized');
     } else {
@@ -57,9 +57,9 @@ export class ImageService {
       }
     }
 
-    // Ensure we have at least 3 menu items, pad with McDonald's defaults if needed
+    // Ensure we have at least 3 menu items, pad with defaults if needed
     while (menuItems.length < 3) {
-      const defaultItems = ["McDonald's fries", "McDonald's burger", "vanilla milkshake"];
+      const defaultItems = ["Fries", "Burger", "Milkshake"];
       menuItems.push(defaultItems[menuItems.length] || `Menu Item ${menuItems.length + 1}`);
     }
 
@@ -68,7 +68,7 @@ export class ImageService {
 
     // Default location if not found
     if (!location) {
-      location = 'countryside';
+      location = 'downtown';
     }
 
     return { menuItems, location };
@@ -81,7 +81,6 @@ export class ImageService {
     console.log('📝 Extracted menu items:', menuItems);
     console.log('📍 Extracted location:', location);
 
-    // Generate 3 prompts: menu items only
     const prompts: string[] = [];
 
     // Add menu item prompts
@@ -104,8 +103,6 @@ No extra objects, clutter, or background details.`);
     console.log('🎨 Generated 3 prompts:', prompts);
     return prompts;
   }
-
-
 
   async generateImagesFromPrompts(prompts: string[]): Promise<GeneratedImage[]> {
     if (!this.openai) {
@@ -139,7 +136,7 @@ No extra objects, clutter, or background details.`);
           prompt: prompt
         };
       } catch (error) {
-        console.error(`❌ Error generating image ${index + 1}:`, error);
+        console.error(`Error generating image ${index + 1}:`, error);
         // Return a simple placeholder data URL on error
         const placeholderDataUrl = `data:image/svg+xml;base64,${btoa(`
           <svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
@@ -159,10 +156,10 @@ No extra objects, clutter, or background details.`);
 
     try {
       const results = await Promise.all(imagePromises);
-      console.log('🎉 All images generated and converted successfully!', results.length, 'images');
+      console.log('All images generated and converted successfully!', results.length, 'images');
       return results;
     } catch (error) {
-      console.error('❌ Error generating images:', error);
+      console.error('Error generating images:', error);
       return [];
     }
   }

@@ -42,12 +42,7 @@ function MainApp() {
   };
 
   // Yelp AI API call to generate vibes
-  // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
-  const generateVibes = async (_restaurant: any) => {
-    // return default values to save API credits
-    return 'Familiar, Casual, Fast-paced';
-
-    /*
+  const generateVibes = async (restaurant: any) => {
     try {
       const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
       if (!YELP_API_KEY) {
@@ -80,7 +75,6 @@ function MainApp() {
 
       const data = await response.json();
       // Extract the vibes from the AI response
-      // The response might be an object with {text, tags} structure
       let vibesText = 'Familiar, Casual, Fast-paced'; // Default fallback
 
       if (data.response) {
@@ -97,10 +91,7 @@ function MainApp() {
       // Fallback to generic vibes if API fails
       return 'Familiar, Casual, Fast-paced';
     }
-    */
   };
-
-
 
   // Yelp AI API call to generate detailed restaurant information
   const generateDetailedInfo = async (restaurant: any) => {
@@ -164,12 +155,7 @@ Do not include a full address or any visual description.`;
   };
 
   // Yelp AI API call to generate menu/service items
-  // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
-  const generateMenuItems = async (_restaurant: any) => {
-    // return default values to save API credits
-    return 'McDonald\'s fries\nMcDonald\'s burger\nvanilla milkshake';
-
-    /*
+  const generateMenuItems = async (restaurant: any) => {
     try {
       const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
       if (!YELP_API_KEY) {
@@ -216,7 +202,6 @@ Do not include a full address or any visual description.`;
       // Fallback to generic items if API fails
       return 'Sample Item - $15.99\nAnother Dish - $12.50\nSpecial Item - $18.75';
     }
-    */
   };
 
   const handleRestaurantSelect = async (restaurant: any) => {
@@ -280,18 +265,18 @@ Do not include a full address or any visual description.`;
   useEffect(() => {
     const generateImages = async () => {
       if (pageDetailedInfo && generatedImages.length === 0 && !isGeneratingImages) {
-        console.log('🚀 Starting DALL-E image generation process for restaurant page');
+        console.log('Starting DALL-E image generation process for restaurant page');
         setIsGeneratingImages(true);
         try {
-          console.log('📝 Detailed info received:', pageDetailedInfo.substring(0, 100) + '...');
+          console.log('Detailed info received:', pageDetailedInfo.substring(0, 100) + '...');
           const images = await imageService.generateRestaurantImages(pageDetailedInfo);
           setGeneratedImages(images);
-          console.log('💾 Images saved to state:', images.length, 'images generated');
+          console.log('Images saved to state:', images.length, 'images generated');
         } catch (error) {
-          console.error('💥 Failed to generate images:', error);
+          console.error('Failed to generate images:', error);
         } finally {
           setIsGeneratingImages(false);
-          console.log('🏁 DALL-E image generation process completed');
+          console.log('DALL-E image generation process completed');
         }
       }
     };

@@ -204,7 +204,7 @@ const Gallery: React.FC = () => {
             <div className="gallery-modal-preview-container">
               {(() => {
                 // Render a larger version for the modal
-                const modalScale = 0.8; // Larger scale for modal view
+                const modalScale = 0.8;
                 if (!selectedItem.pageItems || selectedItem.pageItems.length === 0) {
                   return (
                     <div className="gallery-preview-empty">
@@ -243,7 +243,7 @@ const Gallery: React.FC = () => {
                           <div
                             className="gallery-preview-text"
                             style={{
-                              fontSize: '18px', // Larger text for modal
+                              fontSize: '18px',
                               color: '#333',
                               lineHeight: '1.2',
                               whiteSpace: 'pre-wrap'
