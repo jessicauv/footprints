@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase';
-import { doc, getDoc, setDoc, deleteDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
 import { type GeneratedImage } from './imageService';
 import YelpStars, { getYelpStarsImageUrl } from './YelpStars';

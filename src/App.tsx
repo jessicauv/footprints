@@ -12,7 +12,6 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { imageService, type GeneratedImage } from './imageService';
 import { db } from './firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
 
 interface Journal {
   id: string;
@@ -282,28 +281,7 @@ Do not include a full address or any visual description.`;
     setShowRestaurantSelector(false);
   };
 
-  const handleRestartPage = async () => {
-    // Clear the current page data from Firestore first
-    if (selectedJournal && selectedPage) {
-      try {
-        const pageRef = doc(db, 'journals', selectedJournal.id, 'pages', `page-${selectedPage}`);
-        await deleteDoc(pageRef);
-        console.log('Page data cleared from Firestore for restart');
-      } catch (error) {
-        console.error('Error clearing page data:', error);
-      }
-    }
 
-    // Clear all page and restaurant data to go back to page selection
-    setSelectedPage(null);
-    setSelectedRestaurant(null);
-    setPageVibes(null);
-    setPageDetailedInfo(null);
-    setGeneratedImages([]);
-    setIsGeneratingImages(false);
-    setIsGeneratingContent(false);
-    setShowRestaurantSelector(false);
-  };
 
   // Generate images when detailedInfo is available
   useEffect(() => {

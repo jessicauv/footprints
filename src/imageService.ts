@@ -6,9 +6,12 @@ export interface GeneratedImage {
 }
 
 export class ImageService {
-  private openai: OpenAI | null = null;
+  // COMMENTED OUT TO SAVE CHATGPT CREDITS
+  // private openai: OpenAI | null = null;
 
   constructor() {
+    // COMMENTED OUT TO SAVE CHATGPT CREDITS
+    /*
     const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
     if (apiKey) {
       this.openai = new OpenAI({
@@ -19,6 +22,7 @@ export class ImageService {
     } else {
       console.warn('⚠️ OpenAI API key not found. Set VITE_OPENAI_API_KEY in .env');
     }
+    */
   }
 
   // Parse menu items and location from Yelp AI response
@@ -103,7 +107,8 @@ No extra objects, clutter, or background details.`);
     return prompts;
   }
 
-  // Convert image URL to data URL for local storage
+  // COMMENTED OUT TO SAVE CHATGPT CREDITS - Convert image URL to data URL for local storage
+  /*
   private async convertImageToDataURL(imageUrl: string): Promise<string> {
     try {
       console.log('📥 Downloading image from Azure:', imageUrl);
@@ -129,6 +134,7 @@ No extra objects, clutter, or background details.`);
       throw error;
     }
   }
+  */
 
   async generateImagesFromPrompts(prompts: string[]): Promise<GeneratedImage[]> {
     // COMMENTED OUT TO SAVE CHATGPT/DALL-E CREDITS
