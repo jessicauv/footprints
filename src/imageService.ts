@@ -49,15 +49,38 @@ export class ImageService {
     console.log('🤖 Generating image prompts from detailedInfo...');
     const prompt = `Based on this detailed information about a restaurant: "${detailedInfo}"
 
-Generate exactly 8 different image generation prompts for creating visual representations of this restaurant. Each prompt should be suitable for DALL-E image generation and should capture different aspects like:
-- Exterior/atmosphere
-- Interior dining area
-- Popular menu items
-- Decor/colors
-- Ambiance
-- People enjoying the place
-- Specific features mentioned
-- Overall vibe
+    Generate exactly 8 distinct image-generation prompts for DALL·E.
+Each prompt should describe a cute, sticker-style illustration that can be used in a digital diary or journal to represent a restaurant or place visited.
+
+Sticker style requirements:
+
+Cute, playful, and simple (cartoon / kawaii-style)
+
+Designed as individual stickers
+
+Transparent background (no background)
+
+No text, letters, numbers, or words in the image
+
+Sticker content guidelines:
+
+Each prompt should represent a different visual idea, such as:
+
+A polaroid-style picture frame (without any text)
+
+Cartoon illustrations of menu items
+
+A flag representing the cuisine or country
+
+Emojis or symbolic icons
+
+A city/high-rise building if the place is downtown
+
+A money or luxury symbol if the place is expensive
+
+Do not repeat the same concept across prompts
+
+Output only the 8 image prompts, clearly separated (one per line or numbered). Do not include explanations or extra text.
 
 Return only the 8 prompts, one per line, with no additional text or numbering.`;
 

@@ -175,39 +175,43 @@ const Bookshelf: React.FC<BookshelfProps> = ({ onJournalClick }) => {
         <div className="create-journal-modal">
           <div className="modal-content">
             <h3>Create New Journal</h3>
-            <div className="form-group">
-              <label htmlFor="journal-title">Title:</label>
-              <input
-                type="text"
-                id="journal-title"
-                value={newJournalTitle}
-                onChange={(e) => setNewJournalTitle(e.target.value)}
-                placeholder="Enter journal title"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="journal-description">Description (optional):</label>
-              <textarea
-                id="journal-description"
-                value={newJournalDescription}
-                onChange={(e) => setNewJournalDescription(e.target.value)}
-                placeholder="Enter journal description"
-                rows={3}
-                maxLength={100}
-              />
-            </div>
-            <div className="modal-actions">
-              <button onClick={createJournal} className="create-btn">
-                Create Journal
-              </button>
-              <button
-                onClick={() => setShowCreateForm(false)}
-                className="cancel-btn"
-              >
-                Cancel
-              </button>
-            </div>
+            <form onSubmit={(e) => { e.preventDefault(); createJournal(); }}>
+              <div className="form-group">
+                <label htmlFor="journal-title">Title:</label>
+                <input
+                  type="text"
+                  id="journal-title"
+                  value={newJournalTitle}
+                  onChange={(e) => setNewJournalTitle(e.target.value)}
+                  placeholder="Enter journal title"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="journal-description">Description (optional):</label>
+                <textarea
+                  id="journal-description"
+                  value={newJournalDescription}
+                  onChange={(e) => setNewJournalDescription(e.target.value)}
+                  placeholder="Enter journal description"
+                  rows={3}
+                  maxLength={100}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="submit" className="create-btn">
+                  Create Journal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="cancel-btn"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

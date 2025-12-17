@@ -14,12 +14,12 @@ interface PageEditorProps {
   };
   pageId: number;
   vibes?: string;
-  review?: string;
   detailedInfo?: string;
   onClose: () => void;
   onRestart: () => void;
   restaurant?: any;
   generatedImages?: GeneratedImage[];
+  onImagesLoaded?: (images: GeneratedImage[]) => void;
 }
 
 interface DraggableItem {
@@ -33,7 +33,136 @@ interface DraggableItem {
 
 
 
-const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, review, detailedInfo, onClose, onRestart, restaurant, generatedImages = [] }) => {
+const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detailedInfo, onClose, onRestart, restaurant, generatedImages = [], onImagesLoaded }) => {
+  // Static journal component images
+  const journalComponentImages = [
+    { id: 'flower', url: '/journal-components/flower.png', alt: 'Flower' },
+    { id: 'highlight', url: '/journal-components/highlight.png', alt: 'Highlight' },
+    { id: 'photostrip', url: '/journal-components/photostrip.png', alt: 'Photo Strip' },
+    { id: 'postcard', url: '/journal-components/postcard.png', alt: 'Postcard' },
+    { id: 'scrappaper', url: '/journal-components/scrappaper.png', alt: 'Scrap Paper' },
+    { id: 'stickynote', url: '/journal-components/stickynote.png', alt: 'Sticky Note' },
+    { id: 'tape', url: '/journal-components/tape.png', alt: 'Tape' },
+    { id: 'ticket', url: '/journal-components/ticket.png', alt: 'Ticket' },
+    { id: 'receipt', url: '/journal-components/customizable/receipt.png', alt: 'Receipt' },
+    { id: 'custom-ticket', url: '/journal-components/customizable/ticket.png', alt: 'Custom Ticket' },
+  ];
+
+  // Function to create a customized ticket image with restaurant name and address
+  const createCustomizedTicket = async (ticketUrl: string, restaurant: any): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        // Set canvas size to match image
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // Draw the original ticket image
+        ctx.drawImage(img, 0, 0);
+
+        // Add restaurant name and address text overlay
+        ctx.fillStyle = '#000000'; // Black color
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        // Position text more to the right
+        const textX = 550; // 550px from left edge
+        const centerY = canvas.height / 2;
+
+        // Add text shadow for better visibility
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+
+        // Draw the restaurant name (large font) - max 16 characters
+        ctx.font = 'bold 44px "Special Elite", cursive';
+        const truncatedName = restaurant.name.length > 16 ? restaurant.name.substring(0, 16) + '...' : restaurant.name;
+        ctx.fillText(truncatedName, textX, centerY - 50);
+
+        // Draw the restaurant address (medium-large font) - max 22 characters
+        ctx.font = 'bold 32px "Special Elite", cursive';
+        const fullAddress = `${restaurant.location?.address1 || ''}, ${restaurant.location?.city || ''}`.trim();
+        const truncatedAddress = fullAddress.length > 22 ? fullAddress.substring(0, 22) + '...' : fullAddress;
+        ctx.fillText(truncatedAddress, textX, centerY - 15);
+
+        // Draw menu items (small font) - exactly 2 items
+        ctx.font = 'bold 24px "Special Elite", cursive';
+        const menuItems = restaurant.menuItems ? restaurant.menuItems.split('\n').slice(0, 2) : ['Sample Item - $15.99'];
+        menuItems.forEach((item: string, index: number) => {
+          const truncatedItem = item.length > 20 ? item.substring(0, 20) + '...' : item;
+          ctx.fillText(truncatedItem, textX, centerY + 15 + (index * 30));
+        });
+
+        // Convert canvas to data URL
+        const customizedTicketUrl = canvas.toDataURL('image/png');
+        resolve(customizedTicketUrl);
+      };
+      img.src = ticketUrl;
+    });
+  };
+
+  // Function to create a customized receipt image with restaurant name and address
+  const createCustomizedReceipt = async (receiptUrl: string, restaurant: any): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        // Set canvas size to match image
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // Draw the original receipt image
+        ctx.drawImage(img, 0, 0);
+
+        // Add restaurant name and address text overlay
+        ctx.fillStyle = '#000000'; // Black color
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        // Position text higher up and more to the right
+        const textX = 450; // 450px from left edge (moved right)
+        const centerY = canvas.height / 2 - 200; // Moved 200px higher
+
+        // Add text shadow for better visibility
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+
+        // Draw the restaurant name (large font) - max 16 characters
+        ctx.font = 'bold 40px "Special Elite", cursive';
+        const truncatedName = restaurant.name.length > 16 ? restaurant.name.substring(0, 16) + '...' : restaurant.name;
+        ctx.fillText(truncatedName, textX, centerY - 50);
+
+        // Draw the restaurant address (medium-large font) - max 22 characters
+        ctx.font = 'bold 28px "Special Elite", cursive';
+        const fullAddress = `${restaurant.location?.address1 || ''}, ${restaurant.location?.city || ''}`.trim();
+        const truncatedAddress = fullAddress.length > 22 ? fullAddress.substring(0, 22) + '...' : fullAddress;
+        ctx.fillText(truncatedAddress, textX, centerY - 15);
+
+        // Draw menu items (small font) - exactly 2 items
+        ctx.font = 'bold 24px "Special Elite", cursive';
+        const menuItems = restaurant.menuItems ? restaurant.menuItems.split('\n').slice(0, 2) : ['Sample Item - $15.99'];
+        menuItems.forEach((item: string, index: number) => {
+          const truncatedItem = item.length > 20 ? item.substring(0, 20) + '...' : item;
+          ctx.fillText(truncatedItem, textX, centerY + 15 + (index * 30));
+        });
+
+        // Convert canvas to data URL
+        const customizedReceiptUrl = canvas.toDataURL('image/png');
+        resolve(customizedReceiptUrl);
+      };
+      img.src = receiptUrl;
+    });
+  };
   const [canvasItems, setCanvasItems] = useState<DraggableItem[]>([]);
   const [draggedItem, setDraggedItem] = useState<DraggableItem | null>(null);
   const [showShareOptions, setShowShareOptions] = useState(false);
@@ -55,6 +184,11 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, review,
           const data = pageSnap.data();
           console.log('Loaded page data:', data);
           setCanvasItems(data.items || []);
+
+          // Load existing generated images if available and notify parent
+          if (data.generatedImages && onImagesLoaded) {
+            onImagesLoaded(data.generatedImages);
+          }
         } else {
           console.log('No existing page data found');
           setCanvasItems([]);
@@ -66,7 +200,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, review,
     };
 
     loadPageContent();
-  }, [journal.id, pageId]);
+  }, [journal.id, pageId, onImagesLoaded]);
 
   // Save page content to Firestore
   const savePageContent = async (items: DraggableItem[]) => {
@@ -110,12 +244,17 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, review,
   }, [canvasItems]);
 
   const sidebarItems = [
-    { id: 'text', type: 'text' as const, content: 'Text' },
-    { id: 'image', type: 'upload' as const, content: 'Image' },
+    { id: 'text', type: 'text' as const, content: 'Add Text' },
+    { id: 'image', type: 'upload' as const, content: 'Add Image' },
     ...(vibes ? [{ id: 'vibes', type: 'text' as const, content: vibes }] : []),
-    ...(review ? [{ id: 'review', type: 'text' as const, content: review }] : []),
+    ...(restaurant?.rating ? [{ id: 'rating', type: 'text' as const, content: `⭐ ${restaurant.rating}` }] : []),
     ...generatedImages.map((image, index) => ({
       id: `generated-image-${index}`,
+      type: 'image' as const,
+      content: image.url
+    })),
+    ...journalComponentImages.map((image) => ({
+      id: `component-${image.id}`,
       type: 'image' as const,
       content: image.url
     }))
@@ -147,25 +286,52 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, review,
     e.target.value = '';
   };
 
-  const handleDragEnd = (e: React.DragEvent) => {
+  const handleDragEnd = async (e: React.DragEvent) => {
     if (draggedItem) {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
+
+      let content = draggedItem.content;
+
+      // Check if this is a ticket that needs customization
+      const isTicket = draggedItem.id === 'component-ticket' || draggedItem.id === 'component-custom-ticket';
+      const isReceipt = draggedItem.id === 'component-receipt';
+
+      if (isTicket && restaurant?.name) {
+        try {
+          // Create customized ticket with restaurant name
+          content = await createCustomizedTicket(draggedItem.content, restaurant);
+        } catch (error) {
+          console.error('Failed to customize ticket:', error);
+          // Fall back to original ticket if customization fails
+        }
+      } else if (isReceipt && restaurant?.name) {
+        try {
+          // Create customized receipt with restaurant name
+          content = await createCustomizedReceipt(draggedItem.content, restaurant);
+        } catch (error) {
+          console.error('Failed to customize receipt:', error);
+          // Fall back to original receipt if customization fails
+        }
+      } else {
+        // Handle text items
+        content = draggedItem.type === 'text' && draggedItem.content !== vibes && draggedItem.content !== `⭐ ${restaurant?.rating || ''}` ? '' : draggedItem.content;
+      }
 
       const newItem: DraggableItem = {
         ...draggedItem,
         x,
         y,
         id: `${draggedItem.id}-${Date.now()}`, // Make unique
-        content: draggedItem.type === 'text' && draggedItem.content !== vibes && draggedItem.content !== review ? '' : draggedItem.content, // Start with empty text for text items, but keep vibes and review content
-        editable: draggedItem.content !== vibes && draggedItem.content !== review, // Vibes and review text are not editable
+        content,
+        editable: draggedItem.content !== vibes && draggedItem.content !== `⭐ ${restaurant?.rating || ''}`, // Vibes and rating text are not editable
       };
 
       setCanvasItems([...canvasItems, newItem]);
 
       // If it's a text item and editable, start editing immediately
-      if (draggedItem.type === 'text' && draggedItem.content !== vibes) {
+      if (draggedItem.type === 'text' && draggedItem.content !== vibes && draggedItem.content !== `⭐ ${restaurant?.rating || ''}`) {
         setEditingTextId(newItem.id);
       }
     }
@@ -349,8 +515,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, review,
                         style={{
                           maxWidth: '100%',
                           maxHeight: '80px',
-                          objectFit: 'cover',
-                          borderRadius: '4px'
+                          objectFit: 'contain',
+                          display: 'block',
+                          backgroundColor: 'transparent'
                         }}
                       />
                     ) : (
@@ -360,7 +527,6 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, review,
                 )
               ))}
           </div>
-          <p className="generated-by">Generated by Yelp AI API</p>
         </div>
 
           <div

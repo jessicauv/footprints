@@ -10,6 +10,8 @@ import Homepage from './Homepage';
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { imageService, type GeneratedImage } from './imageService';
+import { db } from './firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
 
 interface Journal {
   id: string;
@@ -25,7 +27,7 @@ function MainApp() {
   const [selectedJournal, setSelectedJournal] = useState<Journal | null>(null);
   const [selectedPage, setSelectedPage] = useState<number | null>(null);
   const [pageVibes, setPageVibes] = useState<string | null>(null);
-  const [pageReview, setPageReview] = useState<string | null>(null);
+
   const [pageDetailedInfo, setPageDetailedInfo] = useState<string | null>(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
   const [showRestaurantSelector, setShowRestaurantSelector] = useState(false);
@@ -33,9 +35,19 @@ function MainApp() {
   const [showLogin, setShowLogin] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+
+  const handleImagesLoaded = (images: GeneratedImage[]) => {
+    setGeneratedImages(images);
+  };
 
   // Yelp AI API call to generate vibes
+  // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
   const generateVibes = async (restaurant: any) => {
+    // return default values to save API credits
+    return 'Cozy, Authentic, Welcoming';
+
+    /*
     try {
       const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
       if (!YELP_API_KEY) {
@@ -85,62 +97,18 @@ function MainApp() {
       // Fallback to generic vibes if API fails
       return 'Cozy, Authentic, Welcoming';
     }
+    */
   };
 
-  // Yelp AI API call to generate restaurant review
-  const generateReview = async (restaurant: any) => {
-    try {
-      const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
-      if (!YELP_API_KEY) {
-        throw new Error('Yelp API key not found. Please set VITE_YELP_API_KEY as an environment variable.');
-      }
 
-      // Use Yelp AI API to generate restaurant review
-      const address = `${restaurant.location?.address1 || ''}, ${restaurant.location?.city || ''}, ${restaurant.location?.state || ''} ${restaurant.location?.zip_code || ''}`.trim();
-      const query = `${restaurant.name} restaurant at ${address}: give me a short review of the restaurant that I can add to my journal on the place`;
-
-      const response = await fetch('https://api.yelp.com/ai/chat/v2', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${YELP_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: query,
-          user_context: {
-            locale: 'en_US',
-            latitude: restaurant.coordinates?.latitude || 40.7128, // Default to NYC if no coordinates
-            longitude: restaurant.coordinates?.longitude || -74.0060
-          }
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Yelp AI API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      // Extract the review from the AI response
-      let reviewText = 'This restaurant offers a wonderful dining experience with great food and atmosphere.'; // Default fallback
-
-      if (data.response) {
-        if (typeof data.response === 'string') {
-          reviewText = data.response;
-        } else if (typeof data.response === 'object' && data.response.text) {
-          reviewText = data.response.text;
-        }
-      }
-
-      return reviewText;
-    } catch (error) {
-      console.error('Error generating review:', error);
-      // Fallback to generic review if API fails
-      return 'This restaurant offers a wonderful dining experience with great food and atmosphere.';
-    }
-  };
 
   // Yelp AI API call to generate detailed restaurant information
+  // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
   const generateDetailedInfo = async (restaurant: any) => {
+    // return default values to save API credits
+    return 'Detailed information not available.';
+
+    /*
     try {
       const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
       if (!YELP_API_KEY) {
@@ -149,7 +117,7 @@ function MainApp() {
 
       // Use Yelp AI API to generate detailed restaurant information
       const address = `${restaurant.location?.address1 || ''}, ${restaurant.location?.city || ''}, ${restaurant.location?.state || ''} ${restaurant.location?.zip_code || ''}`.trim();
-      const query = `Tell me everything about ${restaurant.name} restaurant at ${address} that I would need to know if I wanted to write a journal to document my visit there. What colors does it give off? What patterns? What are some popular services or menu items? How much does a reservation or ticket cost? What cuisine is it? What are common reviews?`;
+      const query = `Describe ${restaurant.name} restaurant at ${address} in 40-60 words, focusing on visual appearance, colors, atmosphere, patterns, and key features for creating images.`;
 
       const response = await fetch('https://api.yelp.com/ai/chat/v2', {
         method: 'POST',
@@ -189,28 +157,97 @@ function MainApp() {
       // Fallback to generic info if API fails
       return 'Detailed information not available.';
     }
+    */
+  };
+
+  // Yelp AI API call to generate menu/service items
+  // COMMENTED OUT TO SAVE API CREDITS - USING DEFAULT VALUES
+  const generateMenuItems = async (restaurant: any) => {
+    // return default values to save API credits
+    return 'Sample Item - $15.99\nAnother Dish - $12.50';
+
+    /*
+    try {
+      const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
+      if (!YELP_API_KEY) {
+        throw new Error('Yelp API key not found. Please set VITE_YELP_API_KEY as an environment variable.');
+      }
+
+      // Use Yelp AI API to generate exactly 2 menu items
+      const query = `List exactly 2 popular menu items from ${restaurant.name} restaurant. Output only the items, one per line, in format: Item Name - $Price. No other text or explanation.`;
+
+      const response = await fetch('https://api.yelp.com/ai/chat/v2', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${YELP_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query,
+          user_context: {
+            locale: 'en_US',
+            latitude: restaurant.coordinates?.latitude || 40.7128,
+            longitude: restaurant.coordinates?.longitude || -74.0060
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Yelp AI API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      let menuItemsText = 'Sample Item - $15.99\nAnother Dish - $12.50\nSpecial Item - $18.75'; // Default fallback
+
+      if (data.response) {
+        if (typeof data.response === 'string') {
+          menuItemsText = data.response;
+        } else if (typeof data.response === 'object' && data.response.text) {
+          menuItemsText = data.response.text;
+        }
+      }
+
+      return menuItemsText;
+    } catch (error) {
+      console.error('Error generating menu items:', error);
+      // Fallback to generic items if API fails
+      return 'Sample Item - $15.99\nAnother Dish - $12.50\nSpecial Item - $18.75';
+    }
+    */
   };
 
   const handleRestaurantSelect = async (restaurant: any) => {
     setSelectedRestaurant(restaurant);
     setShowRestaurantSelector(false);
 
-    // Start generating Yelp AI content and images immediately
+    // Clear any existing generated images for the new restaurant
+    setGeneratedImages([]);
+
+    // Start content generation
+    setIsGeneratingContent(true);
+
     try {
-      const [vibesText, reviewText, detailedInfoText] = await Promise.all([
+      const [vibesText, detailedInfoText, menuItemsText] = await Promise.all([
         generateVibes(restaurant),
-        generateReview(restaurant),
-        generateDetailedInfo(restaurant)
+        generateDetailedInfo(restaurant),
+        generateMenuItems(restaurant)
       ]);
 
+      // Add menu items to restaurant object
+      const restaurantWithMenu = {
+        ...restaurant,
+        menuItems: menuItemsText
+      };
+
+      setSelectedRestaurant(restaurantWithMenu);
       setPageVibes(vibesText);
-      setPageReview(reviewText);
       setPageDetailedInfo(detailedInfoText);
     } catch (error) {
       // Fallback to default content if API fails
       setPageVibes('Cozy, Authentic, Welcoming');
-      setPageReview('This restaurant offers a wonderful dining experience with great food and atmosphere.');
       setPageDetailedInfo('Detailed information not available.');
+    } finally {
+      setIsGeneratingContent(false);
     }
   };
 
@@ -229,24 +266,37 @@ function MainApp() {
   const handleClosePage = () => {
     setSelectedPage(null);
     setPageVibes(null);
-    setPageReview(null);
     setPageDetailedInfo(null);
     setSelectedRestaurant(null);
     setShowRestaurantSelector(false);
   };
 
-  const handleRestartPage = () => {
-    // Clear restaurant data and go back to restaurant selection
+  const handleRestartPage = async () => {
+    // Clear the current page data from Firestore first
+    if (selectedJournal && selectedPage) {
+      try {
+        const pageRef = doc(db, 'journals', selectedJournal.id, 'pages', `page-${selectedPage}`);
+        await deleteDoc(pageRef);
+        console.log('Page data cleared from Firestore for restart');
+      } catch (error) {
+        console.error('Error clearing page data:', error);
+      }
+    }
+
+    // Clear all page and restaurant data to go back to page selection
+    setSelectedPage(null);
     setSelectedRestaurant(null);
     setPageVibes(null);
-    setPageReview(null);
     setPageDetailedInfo(null);
     setGeneratedImages([]);
     setIsGeneratingImages(false);
-    setShowRestaurantSelector(true);
+    setIsGeneratingContent(false);
+    setShowRestaurantSelector(false);
   };
 
   // Generate images when detailedInfo is available
+  // COMMENTED OUT DUE TO BILLING LIMIT REACHED
+  /*
   useEffect(() => {
     const generateImages = async () => {
       if (pageDetailedInfo && generatedImages.length === 0 && !isGeneratingImages) {
@@ -268,6 +318,7 @@ function MainApp() {
 
     generateImages();
   }, [pageDetailedInfo, generatedImages.length, isGeneratingImages]);
+  */
 
   if (loading) {
     return <div className="loading">Loading...</div>;
@@ -309,12 +360,12 @@ function MainApp() {
             onRestaurantSelect={handleRestaurantSelect}
             onClose={handleClosePage}
           />
-        ) : selectedPage && selectedJournal && selectedRestaurant && (!pageVibes || isGeneratingImages) ? (
+        ) : selectedPage && selectedJournal && selectedRestaurant && (isGeneratingContent || isGeneratingImages) ? (
           <div className="loading-overlay">
             <div className="loading-content">
               <div className="loading-spinner"></div>
-              <h2>{!pageVibes ? 'Generating Content...' : 'Generating...'}</h2>
-              <p>Please wait while we {!pageVibes ? 'create personalized content' : 'create beautiful images'} for your journal page.</p>
+              <h2>{isGeneratingContent ? 'Generating Content...' : 'Generating Images...'}</h2>
+              <p>Please wait while we {isGeneratingContent ? 'create personalized content' : 'create beautiful images'} for your journal page.</p>
             </div>
           </div>
         ) : selectedPage && selectedJournal && pageVibes && !isGeneratingImages ? (
@@ -322,10 +373,10 @@ function MainApp() {
             journal={selectedJournal}
             pageId={selectedPage}
             vibes={pageVibes}
-            review={pageReview || undefined}
             detailedInfo={pageDetailedInfo || undefined}
             restaurant={selectedRestaurant}
             generatedImages={generatedImages}
+            onImagesLoaded={handleImagesLoaded}
             onClose={handleClosePage}
             onRestart={handleRestartPage}
           />
