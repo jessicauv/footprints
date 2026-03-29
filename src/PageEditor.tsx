@@ -37,6 +37,19 @@ interface DraggableItem {
 
 
 const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detailedInfo, onClose, restaurant, generatedImages = [], onImagesLoaded }) => {
+  // Mobile detection and tab state (includes tablets up to 1024px)
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const [activeTab, setActiveTab] = useState<'items' | 'canvas' | 'info'>('canvas');
+
+  // Update mobile state on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 1024);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // Static journal component images
   const journalComponentImages = [
     { id: 'flower', url: '/journal-components/flower.png', alt: 'Flower' },
@@ -282,6 +295,87 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
 
   const handleDragStart = (item: Omit<DraggableItem, 'x' | 'y'>) => {
     setDraggedItem({ ...item, x: 0, y: 0 });
+  };
+
+  // Handle tap-to-add on mobile
+  const handleTapToAdd = async (item: Omit<DraggableItem, 'x' | 'y'>) => {
+    if (!isMobile) return;
+
+    // Calculate center position of canvas
+    const canvasElement = document.querySelector('.canvas-paper');
+    const canvasRect = canvasElement?.getBoundingClientRect();
+    
+    // Default to center of canvas
+    const centerX = canvasRect ? canvasRect.width / 2 - 75 : 150; // Center minus half default width
+    const centerY = canvasRect ? canvasRect.height / 2 - 75 : 150; // Center minus half default height
+
+    let content = item.content;
+
+    // Convert AI-generated images and Yelp stars to data URLs for canvas compatibility
+    if ((item.id.startsWith('generated-image-') || item.id === 'rating') && typeof content === 'string') {
+      try {
+        const convertedContent = await convertImageToDataURL(content);
+        content = convertedContent;
+      } catch (error) {
+        console.warn('Failed to convert image to data URL:', error);
+      }
+    }
+
+    // Check if this is a ticket that needs customization
+    const isTicket = item.id === 'component-custom-ticket';
+    const isReceipt = item.id === 'component-receipt';
+
+    if (isTicket && restaurant?.name) {
+      try {
+        content = await createCustomizedTicket(item.content, restaurant);
+      } catch (error) {
+        console.error('Failed to customize ticket:', error);
+      }
+    } else if (isReceipt && restaurant?.name) {
+      try {
+        content = await createCustomizedReceipt(item.content, restaurant);
+      } catch (error) {
+        console.error('Failed to customize receipt:', error);
+      }
+    } else {
+      // Handle text items
+      content = item.type === 'text' && item.content !== vibes && item.content !== `⭐ ${restaurant?.rating || ''}` ? '' : item.content;
+    }
+
+    // Set default sizes
+    let defaultWidth = item.type === 'text' ? 200 : 150;
+    let defaultHeight = item.type === 'text' ? 50 : 150;
+
+    // Special case for photostrip - make it larger
+    if (item.id === 'component-photostrip') {
+      defaultWidth = 300;
+      defaultHeight = 200;
+    }
+
+    const newItem: DraggableItem = {
+      ...item,
+      x: centerX,
+      y: centerY,
+      id: `${item.id}-${Date.now()}`,
+      content,
+      width: item.width || defaultWidth,
+      height: item.height || defaultHeight,
+      editable: item.content !== vibes && item.content !== `⭐ ${restaurant?.rating || ''}`,
+    };
+
+    const newItems = [...canvasItems, newItem];
+    setCanvasItems(newItems);
+
+    // Save after adding new item
+    savePageContent(newItems);
+
+    // If it's a text item and editable, start editing immediately
+    if (item.type === 'text' && item.content !== vibes && item.content !== `⭐ ${restaurant?.rating || ''}`) {
+      setEditingTextId(newItem.id);
+    }
+
+    // Auto-switch to canvas tab on mobile
+    setActiveTab('canvas');
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -798,191 +892,224 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   */
 
   return (
-    <div className="page-editor-overlay">
-      <div className="page-editor">
+    <div className={`page-editor-overlay ${isMobile ? 'mobile' : ''}`}>
+      <div className={`page-editor ${isMobile ? 'mobile' : ''}`}>
         <div className="journal-title-header">
           <div></div>
           <h1 className="journal-title">{journal.title}</h1>
           <button onClick={onClose} className="close-editor-btn">×</button>
         </div>
 
-        <div className="editor-content">
-          <div className="sidebar">
-            <h3>Drag & Drop Items</h3>
-
-            <div className="sidebar-items">
-              {sidebarItems.map(item => (
-                item.type === 'upload' ? (
-                  <div key={item.id} className="sidebar-item">
-                    <label htmlFor="image-upload" className="upload-label">
-                      <div className="image-preview">{item.content}</div>
-                    </label>
-                    <input
-                      id="image-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ display: 'none' }}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    key={item.id}
-                    className="sidebar-item"
-                    draggable
-                    onDragStart={() => handleDragStart(item as any)}
-                  >
-                    {item.type === 'image' ? (
-                      <img
-                        src={item.content}
-                        alt="Generated"
-                        className="image-preview"
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '80px',
-                          objectFit: 'contain',
-                          display: 'block',
-                          backgroundColor: 'transparent'
-                        }}
-                      />
-                    ) : (
-                      <div className="text-preview">{item.content}</div>
-                    )}
-                  </div>
-                )
-              ))}
+        {/* Mobile Tab Navigation */}
+        {isMobile && (
+          <div className="mobile-tab-navigation">
+            <button
+              className={`tab-button ${activeTab === 'items' ? 'active' : ''}`}
+              onClick={() => setActiveTab('items')}
+            >
+              📦 Items
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'canvas' ? 'active' : ''}`}
+              onClick={() => setActiveTab('canvas')}
+            >
+              🎨 Canvas
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'info' ? 'active' : ''}`}
+              onClick={() => setActiveTab('info')}
+            >
+              ℹ️ Info
+            </button>
           </div>
-        </div>
+        )}
 
-          <div
-            className="canvas"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDragEnd}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-          >
-            <div className="canvas-paper">
-              {canvasItems.map(item => (
-                <div
-                  key={item.id}
-                  className={`canvas-item ${item.type}-item ${draggingItem === item.id ? 'dragging' : ''}`}
-                  style={{
-                    left: item.x,
-                    top: item.y,
-                    width: item.width || (item.type === 'text' ? 200 : 150),
-                    height: item.height || (item.type === 'text' ? 50 : 150),
-                    transform: item.rotation ? `rotate(${item.rotation}deg)` : undefined,
-                    transformOrigin: 'center center',
-                    cursor: editingTextId === item.id ? 'text' : (item.editable !== false ? 'move' : 'default')
-                  }}
-                  onMouseDown={(e) => handleMouseDown(e, item.id)}
-                  onDoubleClick={() => deleteItem(item.id)}
-                  onMouseEnter={() => setHoveredItem(item.id)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                >
-                  {item.type === 'text' ? (
-                    editingTextId === item.id ? (
+        <div className={`editor-content ${isMobile ? 'mobile' : ''}`}>
+          {/* Sidebar - show on desktop always, on mobile only when items tab is active */}
+          {(!isMobile || activeTab === 'items') && (
+            <div className={`sidebar ${isMobile ? 'mobile' : ''}`}>
+              <h3>{isMobile ? 'Tap to Add Items' : 'Drag & Drop Items'}</h3>
+
+              <div className="sidebar-items">
+                {sidebarItems.map(item => (
+                  item.type === 'upload' ? (
+                    <div key={item.id} className="sidebar-item">
+                      <label htmlFor="image-upload" className="upload-label">
+                        <div className="image-preview">{item.content}</div>
+                      </label>
                       <input
-                        type="text"
-                        value={item.content}
-                        onChange={(e) => updateTextContent(item.id, e.target.value)}
-                        onBlur={finishEditingText}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === 'Escape') {
-                            finishEditingText();
-                          }
-                        }}
-                        className="canvas-text-input"
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        className="canvas-text"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          item.editable !== false && startEditingText(item.id);
-                        }}
-                      >
-                        {item.content || (item.editable !== false ? 'Click to edit text' : '')}
-                      </div>
-                    )
-                  ) : (
-                    <img
-                      src={item.content}
-                      alt="Uploaded image"
-                      className="canvas-image"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        border: 'none',
-                        pointerEvents: 'none'
-                      }}
-                      onError={(e) => {
-                        // Handle CORS errors for DALL-E images by showing placeholder
-                        const target = e.target as HTMLImageElement;
-                        if (target.src.includes('oaidalleapiprodscus.blob.core.windows.net')) {
-                          target.src = `data:image/svg+xml;base64,${btoa(`
-                            <svg width="150" height="150" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="150" height="150" fill="#e3f2fd"/>
-                              <text x="75" y="70" text-anchor="middle" font-family="Arial" font-size="12" fill="#1976d2">
-                                AI Image
-                              </text>
-                              <text x="75" y="85" text-anchor="middle" font-family="Arial" font-size="10" fill="#666">
-                                (CORS blocked)
-                              </text>
-                            </svg>
-                          `)}`;
-                        }
-                      }}
-                    />
-                  )}
-
-                  {/* Transform handles - only show when hovered and not editing text */}
-                  {hoveredItem === item.id && item.editable !== false && !editingTextId && (
-                    <div className="transform-handles">
-                      {/* Resize handle */}
-                      <div
-                        className="resize-handle se"
-                        onMouseDown={(e) => handleResizeStart(e, item.id)}
-                        style={{
-                          position: 'absolute',
-                          right: '-4px',
-                          bottom: '-4px',
-                          width: '8px',
-                          height: '8px',
-                          background: '#646cff',
-                          cursor: 'nw-resize',
-                          borderRadius: '50%'
-                        }}
-                      />
-                      {/* Rotation handle */}
-                      <div
-                        className="rotation-handle"
-                        onMouseDown={(e) => handleRotationStart(e, item.id)}
-                        style={{
-                          position: 'absolute',
-                          top: '-12px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          width: '12px',
-                          height: '12px',
-                          background: '#ff6b6b',
-                          cursor: 'alias',
-                          borderRadius: '50%',
-                          border: '2px solid white',
-                          boxShadow: '0 0 4px rgba(0,0,0,0.3)'
-                        }}
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        style={{ display: 'none' }}
                       />
                     </div>
-                  )}
-                </div>
-              ))}
+                  ) : (
+                    <div
+                      key={item.id}
+                      className={`sidebar-item ${isMobile ? 'tap-to-add' : ''}`}
+                      draggable={!isMobile}
+                      onDragStart={!isMobile ? () => handleDragStart(item as any) : undefined}
+                      onClick={isMobile ? () => handleTapToAdd(item as any) : undefined}
+                    >
+                      {item.type === 'image' ? (
+                        <img
+                          src={item.content}
+                          alt="Generated"
+                          className="image-preview"
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '80px',
+                            objectFit: 'contain',
+                            display: 'block',
+                            backgroundColor: 'transparent'
+                          }}
+                        />
+                      ) : (
+                        <div className="text-preview">{item.content}</div>
+                      )}
+                      {isMobile && <div className="tap-indicator">+</div>}
+                    </div>
+                  )
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {restaurant && (
-            <div className="restaurant-sidebar">
+          {/* Canvas - show on desktop always, on mobile only when canvas tab is active */}
+          {(!isMobile || activeTab === 'canvas') && (
+            <div
+              className={`canvas ${isMobile ? 'mobile' : ''}`}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDragEnd}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+            >
+              <div className="canvas-paper">
+                {canvasItems.map(item => (
+                  <div
+                    key={item.id}
+                    className={`canvas-item ${item.type}-item ${draggingItem === item.id ? 'dragging' : ''}`}
+                    style={{
+                      left: item.x,
+                      top: item.y,
+                      width: item.width || (item.type === 'text' ? 200 : 150),
+                      height: item.height || (item.type === 'text' ? 50 : 150),
+                      transform: item.rotation ? `rotate(${item.rotation}deg)` : undefined,
+                      transformOrigin: 'center center',
+                      cursor: editingTextId === item.id ? 'text' : (item.editable !== false ? 'move' : 'default')
+                    }}
+                    onMouseDown={(e) => handleMouseDown(e, item.id)}
+                    onDoubleClick={() => deleteItem(item.id)}
+                    onMouseEnter={() => setHoveredItem(item.id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    {item.type === 'text' ? (
+                      editingTextId === item.id ? (
+                        <input
+                          type="text"
+                          value={item.content}
+                          onChange={(e) => updateTextContent(item.id, e.target.value)}
+                          onBlur={finishEditingText}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === 'Escape') {
+                              finishEditingText();
+                            }
+                          }}
+                          className="canvas-text-input"
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          className="canvas-text"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            item.editable !== false && startEditingText(item.id);
+                          }}
+                        >
+                          {item.content || (item.editable !== false ? 'Click to edit text' : '')}
+                        </div>
+                      )
+                    ) : (
+                      <img
+                        src={item.content}
+                        alt="Uploaded image"
+                        className="canvas-image"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          border: 'none',
+                          pointerEvents: 'none'
+                        }}
+                        onError={(e) => {
+                          // Handle CORS errors for DALL-E images by showing placeholder
+                          const target = e.target as HTMLImageElement;
+                          if (target.src.includes('oaidalleapiprodscus.blob.core.windows.net')) {
+                            target.src = `data:image/svg+xml;base64,${btoa(`
+                              <svg width="150" height="150" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="150" height="150" fill="#e3f2fd"/>
+                                <text x="75" y="70" text-anchor="middle" font-family="Arial" font-size="12" fill="#1976d2">
+                                  AI Image
+                                </text>
+                                <text x="75" y="85" text-anchor="middle" font-family="Arial" font-size="10" fill="#666">
+                                  (CORS blocked)
+                                </text>
+                              </svg>
+                            `)}`;
+                          }
+                        }}
+                      />
+                    )}
+
+                    {/* Transform handles - only show when hovered and not editing text */}
+                    {hoveredItem === item.id && item.editable !== false && !editingTextId && (
+                      <div className="transform-handles">
+                        {/* Resize handle */}
+                        <div
+                          className="resize-handle se"
+                          onMouseDown={(e) => handleResizeStart(e, item.id)}
+                          style={{
+                            position: 'absolute',
+                            right: '-4px',
+                            bottom: '-4px',
+                            width: '8px',
+                            height: '8px',
+                            background: '#646cff',
+                            cursor: 'nw-resize',
+                            borderRadius: '50%'
+                          }}
+                        />
+                        {/* Rotation handle */}
+                        <div
+                          className="rotation-handle"
+                          onMouseDown={(e) => handleRotationStart(e, item.id)}
+                          style={{
+                            position: 'absolute',
+                            top: '-12px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: '12px',
+                            height: '12px',
+                            background: '#ff6b6b',
+                            cursor: 'alias',
+                            borderRadius: '50%',
+                            border: '2px solid white',
+                            boxShadow: '0 0 4px rgba(0,0,0,0.3)'
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Restaurant Sidebar - show on desktop always, on mobile only when info tab is active */}
+          {restaurant && (!isMobile || activeTab === 'info') && (
+            <div className={`restaurant-sidebar ${isMobile ? 'mobile' : ''}`}>
               <div className="restaurant-info">
                 <h3>{restaurant.name}</h3>
                 <p>{restaurant.location?.address1}, {restaurant.location?.city}</p>

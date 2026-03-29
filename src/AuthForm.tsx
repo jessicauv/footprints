@@ -9,7 +9,7 @@ const AuthForm: React.FC = () => {
   useEffect(() => {
     if (!isSignUp) {
       setEmail('test@gmail.com');
-      setPassword('test1234');
+      setPassword('footprints');
     } else {
       setEmail('');
       setPassword('');

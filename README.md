@@ -50,15 +50,14 @@ Using the Yelp AI API, it extracts rich, niche details about each business: menu
 
 🔗 The app is live & ready to use - <a href="https://try-footprints.vercel.app/">Try It Out</a>
 
-<div style="border: 1px solid rgba(176, 174, 172, 1); padding: 10px; border-radius: 5px; margin-top: 10px; display: inline-block; margin-left: 20px;">
-  <em>Testing Notes</em>
-  <ul>
-    <li>As of 03/28/2026, API usage has been disabled. Project is now in demo mode only. Full functionality works only with your own keys in local development</li>
-    <li>Test account information already pre-filled once you load website</li>
-    <li>OpenAI DALL-E 3 image generation may take a while</li>
-    <!--<li>Firebase storage has document size limits for gallery sharing</li>-->
-  </ul>
-</div>
+**Testing Notes**
+- As of 03/28/2026, API usage has been disabled. Project is now in demo mode only. Full functionality works only with your own keys in local development.
+- Test account information already pre-filled once you load website.
+
+**Known Issues**
+- Page navigation glitches: When you return back to a page you've already journalled on, dragging items on the canvas can be glitchy; some items may not drag or drop correctly.
+- Journal deletion issues: After editing a journal multiple times, deleting it may be slow or fail. Refreshing the page and retrying usually resolves the issue.
+- OpenAI DALL-E 3 image generation may take a while
 
 ### Local Development Setup
 

@@ -2366,3 +2366,277 @@
   object-fit: contain;
   border: none;
 }
+
+/* Mobile & Tablet Responsive Styles for PageEditor */
+@media (max-width: 1024px) {
+  .page-editor-overlay.mobile {
+    padding: 0;
+  }
+
+  .page-editor.mobile {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-editor.mobile .journal-title-header {
+    padding: 0.75rem 1rem;
+    flex-shrink: 0;
+  }
+
+  .page-editor.mobile .journal-title {
+    font-size: 1.2rem;
+  }
+
+  .page-editor.mobile .close-editor-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+
+  /* Mobile Tab Navigation */
+  .mobile-tab-navigation {
+    display: flex;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
+  }
+
+  .tab-button {
+    flex: 1;
+    padding: 0.75rem 0.5rem;
+    border: none;
+    background: transparent;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+  }
+
+  .tab-button:hover {
+    background-color: #e9ecef;
+    color: #333;
+  }
+
+  .tab-button.active {
+    color: #646cff;
+    border-bottom-color: #646cff;
+    background-color: white;
+  }
+
+  /* Mobile Editor Content */
+  .editor-content.mobile {
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Mobile Sidebar */
+  .sidebar.mobile {
+    width: 100%;
+    height: 100%;
+    border-right: none;
+    border-bottom: none;
+    padding: 1rem;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .sidebar.mobile h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+
+  .sidebar.mobile .sidebar-items {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sidebar.mobile .sidebar-item {
+    padding: 0.5rem;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .sidebar.mobile .sidebar-item .text-preview {
+    font-size: 0.85rem;
+    text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+  }
+
+  .sidebar.mobile .sidebar-item .image-preview {
+    max-height: 60px;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  /* Mobile Canvas */
+  .canvas.mobile {
+    width: 100%;
+    height: 100%;
+    padding: 0.5rem;
+    flex: 1;
+  }
+
+  .canvas.mobile .canvas-paper {
+    max-width: 100%;
+    height: 100%;
+  }
+
+  /* Mobile Restaurant Sidebar */
+  .restaurant-sidebar.mobile {
+    width: 100%;
+    height: 100%;
+    border-left: none;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+
+  .restaurant-sidebar.mobile .restaurant-info {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .restaurant-sidebar.mobile .restaurant-info h3 {
+    font-size: 1rem;
+  }
+
+  .restaurant-sidebar.mobile .restaurant-info p {
+    font-size: 0.85rem;
+  }
+
+  .restaurant-sidebar.mobile .page-info-sidebar {
+    padding: 0.75rem;
+  }
+
+  .restaurant-sidebar.mobile .page-info-sidebar .page-number {
+    font-size: 1.5rem;
+  }
+
+  .restaurant-sidebar.mobile .editor-instructions p {
+    font-size: 0.8rem;
+  }
+
+  /* Touch-friendly adjustments */
+  .canvas-item {
+    touch-action: none;
+  }
+
+  .transform-handles .resize-handle,
+  .transform-handles .rotation-handle {
+    min-width: 24px;
+    min-height: 24px;
+  }
+
+  /* Make drag handles larger on mobile for better touch targets */
+  .sidebar.mobile .sidebar-item {
+    cursor: grab;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .sidebar.mobile .sidebar-item:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+  }
+
+  /* Mobile canvas item styling */
+  .canvas.mobile .canvas-item {
+    min-width: 60px;
+    min-height: 60px;
+  }
+
+  .canvas.mobile .text-item {
+    min-width: 80px;
+    min-height: 40px;
+  }
+
+  .canvas.mobile .canvas-text {
+    font-size: 1.2rem;
+    padding: 0.25rem;
+  }
+
+  .canvas.mobile .canvas-text-input {
+    font-size: 1rem;
+    padding: 0.25rem;
+    min-width: 100px;
+  }
+
+  .canvas.mobile .canvas-image {
+    min-width: 60px;
+    min-height: 60px;
+  }
+
+  /* Tap-to-add styling for mobile */
+  .sidebar-item.tap-to-add {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sidebar-item.tap-to-add:active {
+    transform: scale(0.95);
+    background-color: #e3f2fd;
+    border-color: #646cff;
+  }
+
+  .tap-indicator {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background-color: #646cff;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .sidebar.mobile h3 {
+    text-align: center;
+    color: #646cff;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Additional touch optimization */
+@media (hover: none) and (pointer: coarse) {
+  .sidebar-item {
+    min-height: 60px;
+  }
+
+  .tab-button {
+    min-height: 48px;
+  }
+
+  .transform-handles .resize-handle,
+  .transform-handles .rotation-handle {
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .canvas-item {
+    touch-action: none;
+  }
+}
