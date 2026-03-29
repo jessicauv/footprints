@@ -664,6 +664,154 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
     );
   };
 
+  // Touch event handlers for mobile/tablet support
+  const handleTouchStart = (e: React.TouchEvent, itemId: string) => {
+    // Don't start dragging if we're editing text
+    if (editingTextId) return;
+
+    const item = canvasItems.find(item => item.id === itemId);
+    if (!item) return;
+
+    const touch = e.touches[0];
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const offsetX = touch.clientX - rect.left;
+    const offsetY = touch.clientY - rect.top;
+
+    setDraggingItem(itemId);
+    setDragOffset({ x: offsetX, y: offsetY });
+
+    e.preventDefault();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (rotatingItem) {
+      handleRotationTouchMove(e);
+      return;
+    }
+
+    if (resizingItem) {
+      handleResizeTouchMove(e);
+      return;
+    }
+
+    if (!draggingItem) return;
+
+    const touch = e.touches[0];
+    const canvasRect = document.querySelector('.canvas-paper')?.getBoundingClientRect();
+    if (!canvasRect) return;
+
+    const newX = touch.clientX - canvasRect.left - dragOffset.x;
+    const newY = touch.clientY - canvasRect.top - dragOffset.y;
+
+    setCanvasItems(items =>
+      items.map(item =>
+        item.id === draggingItem
+          ? { ...item, x: newX, y: newY }
+          : item
+      )
+    );
+
+    e.preventDefault();
+  };
+
+  const handleTouchEnd = () => {
+    if (draggingItem || resizingItem || rotatingItem) {
+      // Save after drag, resize, or rotate operations
+      savePageContent(canvasItems);
+    }
+    setDraggingItem(null);
+    setResizingItem(null);
+    setRotatingItem(null);
+  };
+
+  const handleResizeTouchStart = (e: React.TouchEvent, itemId: string) => {
+    e.stopPropagation();
+    const item = canvasItems.find(item => item.id === itemId);
+    if (!item) return;
+
+    const touch = e.touches[0];
+    setResizingItem(itemId);
+    setResizeStart({
+      x: touch.clientX,
+      y: touch.clientY,
+      width: item.width || 150,
+      height: item.height || 150
+    });
+
+    e.preventDefault();
+  };
+
+  const handleResizeTouchMove = (e: React.TouchEvent) => {
+    if (!resizingItem) return;
+
+    const item = canvasItems.find(item => item.id === resizingItem);
+    if (!item) return;
+
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - resizeStart.x;
+    const deltaY = touch.clientY - resizeStart.y;
+
+    const newWidth = Math.max(50, resizeStart.width + deltaX);
+    const newHeight = Math.max(50, resizeStart.height + deltaY);
+
+    setCanvasItems(items =>
+      items.map(i =>
+        i.id === resizingItem
+          ? { ...i, width: newWidth, height: newHeight }
+          : i
+      )
+    );
+
+    e.preventDefault();
+  };
+
+  const handleRotationTouchStart = (e: React.TouchEvent, itemId: string) => {
+    e.stopPropagation();
+    const item = canvasItems.find(item => item.id === itemId);
+    if (!item) return;
+
+    const touch = e.touches[0];
+    const itemCenterX = item.x + (item.width || 150) / 2;
+    const itemCenterY = item.y + (item.height || 150) / 2;
+
+    // Calculate initial angle from center to touch point
+    const angle = Math.atan2(touch.clientY - itemCenterY, touch.clientX - itemCenterX) * (180 / Math.PI);
+
+    setRotatingItem(itemId);
+    setRotationStart({
+      x: itemCenterX,
+      y: itemCenterY,
+      angle: angle - (item.rotation || 0)
+    });
+
+    e.preventDefault();
+  };
+
+  const handleRotationTouchMove = (e: React.TouchEvent) => {
+    if (!rotatingItem) return;
+
+    const touch = e.touches[0];
+    // Calculate new angle from center to touch point
+    const newAngle = Math.atan2(touch.clientY - rotationStart.y, touch.clientX - rotationStart.x) * (180 / Math.PI);
+
+    // Apply rotation with constraints
+    let finalAngle = newAngle - rotationStart.angle;
+
+    // Normalize angle to -180 to 180 range
+    while (finalAngle > 180) finalAngle -= 360;
+    while (finalAngle < -180) finalAngle += 360;
+
+    setCanvasItems(items =>
+      items.map(item =>
+        item.id === rotatingItem
+          ? { ...item, rotation: Math.round(finalAngle) }
+          : item
+      )
+    );
+
+    e.preventDefault();
+  };
+
   // Capture canvas as image
   const captureCanvas = async (): Promise<string | null> => {
     const canvasElement = document.querySelector('.canvas-paper') as HTMLElement;
@@ -998,9 +1146,11 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                       height: item.height || (item.type === 'text' ? 50 : 150),
                       transform: item.rotation ? `rotate(${item.rotation}deg)` : undefined,
                       transformOrigin: 'center center',
-                      cursor: editingTextId === item.id ? 'text' : (item.editable !== false ? 'move' : 'default')
+                      cursor: editingTextId === item.id ? 'text' : (item.editable !== false ? 'move' : 'default'),
+                      touchAction: 'none'
                     }}
                     onMouseDown={(e) => handleMouseDown(e, item.id)}
+                    onTouchStart={(e) => handleTouchStart(e, item.id)}
                     onDoubleClick={() => deleteItem(item.id)}
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
@@ -1070,33 +1220,37 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                         <div
                           className="resize-handle se"
                           onMouseDown={(e) => handleResizeStart(e, item.id)}
+                          onTouchStart={(e) => handleResizeTouchStart(e, item.id)}
                           style={{
                             position: 'absolute',
                             right: '-4px',
                             bottom: '-4px',
-                            width: '8px',
-                            height: '8px',
+                            width: '24px',
+                            height: '24px',
                             background: '#646cff',
                             cursor: 'nw-resize',
-                            borderRadius: '50%'
+                            borderRadius: '50%',
+                            touchAction: 'none'
                           }}
                         />
                         {/* Rotation handle */}
                         <div
                           className="rotation-handle"
                           onMouseDown={(e) => handleRotationStart(e, item.id)}
+                          onTouchStart={(e) => handleRotationTouchStart(e, item.id)}
                           style={{
                             position: 'absolute',
-                            top: '-12px',
+                            top: '-16px',
                             left: '50%',
                             transform: 'translateX(-50%)',
-                            width: '12px',
-                            height: '12px',
+                            width: '24px',
+                            height: '24px',
                             background: '#ff6b6b',
                             cursor: 'alias',
                             borderRadius: '50%',
                             border: '2px solid white',
-                            boxShadow: '0 0 4px rgba(0,0,0,0.3)'
+                            boxShadow: '0 0 4px rgba(0,0,0,0.3)',
+                            touchAction: 'none'
                           }}
                         />
                       </div>

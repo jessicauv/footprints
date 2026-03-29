@@ -2535,12 +2535,20 @@
   /* Touch-friendly adjustments */
   .canvas-item {
     touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .transform-handles .resize-handle,
   .transform-handles .rotation-handle {
     min-width: 24px;
     min-height: 24px;
+    touch-action: none;
+  }
+
+  .canvas.mobile .canvas-item {
+    touch-action: none;
   }
 
   /* Make drag handles larger on mobile for better touch targets */
