@@ -86,7 +86,7 @@ Here's all the steps you need to run Footprints locally:
 **Setup Instructions**
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/jessicauviovo/footprints.git
+   git clone https://github.com/jessicauv/footprints.git
    cd footprints
    ```
 
