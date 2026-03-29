@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import YelpStars from './YelpStars';
+import { DEMO_MODE, DEMO_RESTAURANTS, DEMO_AUTOCOMPLETE_SUGGESTIONS } from './config';
 
 interface Restaurant {
   id: string;
@@ -41,6 +42,13 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchTimeoutRef = useRef<number | null>(null);
 
+  // Auto-load demo restaurants when in demo mode
+  useEffect(() => {
+    if (DEMO_MODE) {
+      setRestaurants(DEMO_RESTAURANTS);
+    }
+  }, []);
+
   // Yelp API functions
   const yelpApiCall = async (endpoint: string, params: Record<string, string>) => {
     const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
@@ -75,6 +83,11 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
   };
 
   const getAutocompleteSuggestions = async (text: string) => {
+    if (DEMO_MODE) {
+      // Return demo suggestions in demo mode
+      return { terms: DEMO_AUTOCOMPLETE_SUGGESTIONS };
+    }
+    
     const params: Record<string, string> = { text };
     // Add location if specified
     if (locationTerm.trim()) {
@@ -84,6 +97,20 @@ const RestaurantSelector: React.FC<RestaurantSelectorProps> = ({ onRestaurantSel
   };
 
   const searchBusinesses = async (term: string) => {
+    if (DEMO_MODE) {
+      // Return demo restaurants in demo mode
+      // Filter demo restaurants based on search term
+      const filteredRestaurants = DEMO_RESTAURANTS.filter(restaurant =>
+        restaurant.name.toLowerCase().includes(term.toLowerCase()) ||
+        restaurant.categories.some(cat => cat.title.toLowerCase().includes(term.toLowerCase())) ||
+        restaurant.location.city.toLowerCase().includes(term.toLowerCase())
+      );
+      
+      return {
+        businesses: filteredRestaurants.length > 0 ? filteredRestaurants : DEMO_RESTAURANTS
+      };
+    }
+    
     const params: Record<string, string> = {
       term,
       limit: '10',

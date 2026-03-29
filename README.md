@@ -1,36 +1,23 @@
-<!-- Your Logo Header -->
 ![Logo Header](public/mainlogo.png)
-
-<!-- Use this website to generate badges: https://shields.io/ -->
-[![YouTube](https://img.shields.io/badge/-Demo%20Video-FF0000?style=flat&logo=YouTube&logoColor=white)](https://youtube.com/your-demo)
-[![Devpost](https://img.shields.io/badge/-Devpost-003E54?style=flat&logo=Devpost&logoColor=white)](https://devpost.com/software/1139781)
 
 ## Project Overview
 **Footprints** is a digital diary that lets you aesthetically document the places you’ve been: restaurants, bars, cafés, hotels, spas, and more.
 
 Using the Yelp AI API, it extracts rich, niche details about each business: menu highlights, ambiance, and unique characteristics, etc and transforms them into custom-designed journal components allowing users to create shareable journal entries with drag-and-drop editing.
 
-<!-- How It Works - add clear steps and a GIF -->
 **How It Works:**
-<div style="display: flex; align-items: center; gap: 20px;">
-  <div style="flex: 1;">
-    <ol>
-      <li><strong>Choose a Location:</strong> Search and select from thousands of locations using Yelp's database</li>
-      <li><strong>Content Generation:</strong> Automatically generate personalized vibes, menu descriptions, and AI illustrations you can use in your journal</li>
-      <li><strong>Design Your Page:</strong> Use the drag-and-drop canvas editor to arrange text, images, and journal components</li>
-      <li><strong>Share & Discover:</strong> Publish your journal pages to the community gallery or share them directly to others</li>
-    </ol>
-  </div>
-  <div style="flex: 1;">
-    <img src="public/mainlogo.png" alt="Footprints Logo" width="100%">
-  </div>
-</div>
+- **Choose a Location**: Search and select from thousands of locations using Yelp's database
+- **Content Generation**: Automatically generate personalized vibes, menu descriptions, and AI illustrations you can use in your journal
+- **Design Your Page**: Use the drag-and-drop canvas editor to arrange text, images, and journal components
+- **Share & Discover**: Publish your journal pages to the community gallery or share them directly to others (future implementation)
+
+<img src="public/app.gif" alt="App Functionality" width="1000px">
+
+[![YouTube](https://img.shields.io/badge/-Demo%20Video-FF0000?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/watch?v=43xy2siFags)
 
 ## Technical Architecture
 
-<!-- Core Technologies - get icons from simpleicons.org for your tech stack and color code according to key -->
 **Core Technologies**<br>
-<!-- Can use AI to update this part -->
 
 <table>
   <tr>
@@ -52,7 +39,7 @@ Using the Yelp AI API, it extracts rich, niche details about each business: menu
 **Technical Features**
 - **Drag-and-Drop Canvas Editor**: Intuitive visual editor for arranging text, images, and journal components
 - **Custom Journalling Component Generation**: Uses Yelp AI API to extract niche info on the place - eg 3 words that describe the vibe. Using this, it dynamically creates journal components
-- **Community Gallery**: Public showcase of user-created journal pages with live previews
+- **Community Gallery**: Public showcase of user-created journal pages with live previews (to be implemented)
 - **Restaurant Search Integration**: Direct connection to Yelp's restaurant database with autocomplete
 - **Responsive Design**: Optimized experience across desktop and mobile devices
 - **Firebase Authentication**: Secure user accounts with email/password authentication
@@ -66,14 +53,13 @@ Using the Yelp AI API, it extracts rich, niche details about each business: menu
 <div style="border: 1px solid rgba(176, 174, 172, 1); padding: 10px; border-radius: 5px; margin-top: 10px; display: inline-block; margin-left: 20px;">
   <em>Testing Notes</em>
   <ul>
-    <li>Yelp API has usage limits - may show default content if quota exceeded</li>
-    <li>Can use test account Em: test@gmail.com, PW: test1234 if you want</li>
-    <!--<li>OpenAI DALL-E 3 image generation may take 10-30 seconds per image</li>-->
+    <li>As of 03/28/2026, API usage has been disabled. Project is now in demo mode only. Full functionality works only with your own keys in local development</li>
+    <li>Test account information already pre-filled once you load website</li>
+    <li>OpenAI DALL-E 3 image generation may take a while</li>
     <!--<li>Firebase storage has document size limits for gallery sharing</li>-->
   </ul>
 </div>
 
-<!-- Can use AI to update this part -->
 ### Local Development Setup
 
 Here's all the steps you need to run Footprints locally:
@@ -100,7 +86,6 @@ Here's all the steps you need to run Footprints locally:
    - Get API keys from the following services:
      - **OpenAI API Key**: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
      - **Yelp API Key**: [https://www.yelp.com/developers](https://www.yelp.com/developers)
-     - **Firebase Config**: Already configured in the project
 
 4. **Configure Environment Variables**
    Add your API keys to the `.env` file:
@@ -108,6 +93,19 @@ Here's all the steps you need to run Footprints locally:
    VITE_OPENAI_API_KEY=your_openai_key_here
    VITE_YELP_API_KEY=your_yelp_key_here
    ```
+
+5. **Demo Mode (Optional)**
+   - Demo mode is enabled by default in `src/config.ts`
+   - To toggle demo mode, edit the `DEMO_MODE` variable:
+     ```typescript
+     export const DEMO_MODE = true;  // Enable demo mode (uses mock data)
+     export const DEMO_MODE = false; // Disable demo mode (requires API keys)
+     ```
+   - **Demo mode features:**
+     - Uses mock restaurant data instead of Yelp API
+     - Uses pre-generated demo images instead of OpenAI API
+     - No API keys required to run the application
+     - Perfect for testing and development without API costs
 
 **Running Instructions**
 
@@ -117,19 +115,6 @@ npm run dev
 ```
 
 The application will be available at `http://localhost:5173`
-
-**Build for Production**
-```bash
-npm run build
-npm run preview
-```
-
-**Troubleshooting Local Development**
-
-- **API Key Issues**: Ensure all required environment variables are set in `.env`
-- **Build Errors**: Run `npm install` to ensure all dependencies are installed
-- **Firebase Connection**: Check that Firebase configuration matches your project settings
-- **CORS Issues**: Some external images may not load due to CORS restrictions in development
 
 ## Disclosures
 

@@ -1,11 +1,28 @@
 
 
 import OpenAI from 'openai';
+import { DEMO_MODE } from './config';
 
 export interface GeneratedImage {
   url: string;
   prompt: string;
 }
+
+// Demo images for when DEMO_MODE is enabled
+const DEMO_IMAGES: GeneratedImage[] = [
+  {
+    url: '/journal-components/demo_images/burger.png',
+    prompt: 'Burger'
+  },
+  {
+    url: '/journal-components/demo_images/pizza.png',
+    prompt: 'Pizza'
+  },
+  {
+    url: '/journal-components/demo_images/sushi.png',
+    prompt: 'Sushi'
+  }
+];
 
 export class ImageService {
   private openai: OpenAI | null = null;
@@ -165,6 +182,12 @@ No extra objects, clutter, or background details.`);
   }
 
   async generateRestaurantImages(detailedInfo: string): Promise<GeneratedImage[]> {
+    // In demo mode, return pre-defined demo images without using OpenAI API
+    if (DEMO_MODE) {
+      console.log('Demo mode enabled - returning demo images (no OpenAI API call)');
+      return DEMO_IMAGES;
+    }
+
     const prompts = await this.generateImagePrompts(detailedInfo);
     return await this.generateImagesFromPrompts(prompts);
   }

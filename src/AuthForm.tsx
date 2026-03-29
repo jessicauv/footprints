@@ -1,10 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
 const AuthForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+
+  useEffect(() => {
+    if (!isSignUp) {
+      setEmail('test@gmail.com');
+      setPassword('test1234');
+    } else {
+      setEmail('');
+      setPassword('');
+    }
+  }, [isSignUp]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 

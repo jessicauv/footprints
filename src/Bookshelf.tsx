@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from './firebase';
+import { DEMO_MODE } from './config';
 import {
   collection,
   addDoc,
@@ -251,6 +252,20 @@ const Bookshelf: React.FC<BookshelfProps> = ({ onJournalClick }) => {
         </div>
       </div>
 
+      {DEMO_MODE && (
+        <div className="demo-mode-warning" style={{ 
+          marginTop: '80px',
+          backgroundColor: 'white',
+          padding: '15px 20px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          textAlign: 'center',
+          maxWidth: '600px',
+          margin: '80px auto 0'
+        }}>
+          ⚠️ Demo Mode: Original API keys are inactive. Some features use mock data. Full functionality works only with your own keys.
+        </div>
+      )}
 
     </div>
   );
