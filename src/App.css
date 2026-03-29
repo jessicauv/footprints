@@ -1993,6 +1993,17 @@
   border-radius: 0 !important;
 }
 
+@media (max-width: 768px) {
+  .subtitle-card-overlay {
+    top: 10rem;
+    font-size: 1rem;
+  }
+  
+  .title-text-overlay {
+    font-size: 2.5rem;
+  }
+}
+
 .login-title {
   position: fixed;
   top: 1.5rem;

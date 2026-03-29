@@ -1133,6 +1133,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
               onDrop={handleDragEnd}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               <div className="canvas-paper">
                 {canvasItems.map(item => (
