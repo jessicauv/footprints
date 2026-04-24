@@ -68,13 +68,13 @@ const AuthForm: React.FC = () => {
           {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Login')}
         </button>
       </form>
-      <button
+      {/* <button
         type="button"
         className="toggle-auth"
         onClick={() => setIsSignUp(!isSignUp)}
       >
         {isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up'}
-      </button>
+      </button> */}
     </div>
   );
 };

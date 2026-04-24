@@ -47,45 +47,45 @@
 }
 
 .auth-form {
-  width: 400px;
-  max-width: 90vw;
-  margin: 2rem auto;
-  padding: 2.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem;
   font-family: 'Special Elite', cursive;
+  box-sizing: border-box;
 }
 
 .auth-form h2 {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
   color: #333;
-  font-size: 1.8rem;
+  font-size: 1.4rem;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
   text-align: left;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   font-weight: 500;
   color: #555;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
 }
 
 .form-group input {
   width: 100%;
-  padding: 1rem;
+  padding: 0.5rem 0.6rem;
   border: 1px solid #ddd;
   border-radius: 0.3rem;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
   box-sizing: border-box;
 }
 
 .auth-form input[type="email"],
 .auth-form input[type="password"] {
   font-family: 'Montserrat', sans-serif;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .form-group input:focus {
@@ -98,10 +98,10 @@
   color: #dc3545;
   background-color: #f8d7da;
   border: 1px solid #f5c6cb;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border-radius: 0.3rem;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
 }
 
 .auth-form button[type="submit"] {
@@ -109,12 +109,13 @@
   background-color: #8f7c6d;
   color: white;
   border: none;
-  padding: 1rem;
-  font-size: 1.2rem;
+  padding: 0.6rem;
+  font-size: 1rem;
   border-radius: 0.3rem;
   cursor: pointer;
   transition: background-color 0.3s;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
+  font-family: 'Special Elite', cursive;
 }
 
 .auth-form button[type="submit"]:hover:not(:disabled) {
@@ -654,6 +655,11 @@
   border-bottom: 1px solid #ddd;
 }
 
+.journal-title-header > div:first-child {
+  width: 30px;
+  flex-shrink: 0;
+}
+
 .journal-title {
   margin: 0;
   font-size: 2rem;
@@ -771,7 +777,6 @@
   flex: 1;
   display: flex;
   overflow: hidden;
-  min-height: 85vh;
 }
 
 .sidebar {
@@ -880,6 +885,10 @@
   align-items: center;
 }
 
+.editor-instructions p {
+  font-family: 'Montserrat', sans-serif;
+}
+
 .page-info-sidebar .page-number {
   margin: 0;
   color: #666;
@@ -930,6 +939,7 @@
   outline: none;
   text-decoration: none;
   box-shadow: none;
+  font-family: 'Special Elite', cursive;
 }
 
 .canvas-text-input {
@@ -939,6 +949,7 @@
   border-radius: 0.3rem;
   font-size: 0.9rem;
   color: #333;
+  font-family: 'Special Elite', cursive;
   line-height: 1.4;
   min-width: 150px;
   outline: none;
@@ -1201,6 +1212,7 @@
   background-color: #f8f9fa;
   border-radius: 0.3rem;
   border-left: 4px solid #28a745;
+  font-family: 'Special Elite', cursive;
 }
 
 .selector-actions {
@@ -1953,25 +1965,32 @@
   border-radius: 0 !important;
 }
 
-.subtitle-card-image {
+.subtitle-wrapper {
   position: absolute;
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  max-width: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+.subtitle-card-image {
+  display: block;
+  max-width: 80vw;
   height: auto;
   max-height: 200px;
   object-fit: contain;
   border-radius: 0.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  z-index: 3;
 }
 
 .subtitle-card-overlay {
   position: absolute;
-  bottom: 6rem;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   font-size: 1.5rem;
   font-weight: normal;
   color: black;
@@ -1981,21 +2000,10 @@
   z-index: 4;
   text-align: center;
   white-space: nowrap;
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  -webkit-appearance: none !important;
-  -moz-appearance: none !important;
-  appearance: none !important;
-  text-decoration: none !important;
-  border-radius: 0 !important;
 }
 
 @media (max-width: 768px) {
   .subtitle-card-overlay {
-    top: 10rem;
     font-size: 1rem;
   }
   
@@ -2019,22 +2027,36 @@
   position: relative;
   display: flex;
   justify-content: center;
-  margin-top: 2rem;
+  align-items: center;
+  margin-top: 5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .login-card {
-  max-width: 800px;
+  width: min(560px, calc(100vw - 4rem));
+  max-height: calc(100vh - 8rem);
   height: auto;
+  object-fit: contain;
   position: relative;
   z-index: 1;
 }
 
 .login-form-overlay {
   position: absolute;
-  top: 50%;
-  left: 45%;
+  top: 47%;
+  left: 43%;
   transform: translate(-50%, -50%);
   z-index: 2;
+  width: 52%;
+}
+
+@media (max-width: 480px) {
+  .login-form-overlay {
+    width: 58%;
+    top: 46%;
+    left: 42%;
+  }
 }
 
 /* Loading Overlay for Image Generation */
@@ -2078,6 +2100,7 @@
   margin: 0 0 1rem 0;
   font-size: 1.8rem;
   font-weight: 300;
+  font-family: 'Special Elite', cursive;
 }
 
 .loading-content p {
@@ -2085,6 +2108,7 @@
   font-size: 1rem;
   opacity: 0.9;
   line-height: 1.5;
+  font-family: 'Special Elite', cursive;
 }
 
 /* Gallery Styles */
@@ -2390,6 +2414,7 @@
     border-radius: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   .page-editor.mobile .journal-title-header {
@@ -2410,14 +2435,18 @@
   /* Mobile Tab Navigation */
   .mobile-tab-navigation {
     display: flex;
+    width: 100%;
     background-color: #f8f9fa;
     border-bottom: 1px solid #ddd;
     flex-shrink: 0;
+    overflow: hidden;
+    box-sizing: border-box;
   }
 
   .tab-button {
     flex: 1;
-    padding: 0.75rem 0.5rem;
+    min-width: 0;
+    padding: 0.75rem 0.25rem;
     border: none;
     background: transparent;
     font-size: 0.85rem;
@@ -2426,6 +2455,9 @@
     cursor: pointer;
     transition: all 0.2s;
     border-bottom: 3px solid transparent;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .tab-button:hover {
@@ -2502,6 +2534,7 @@
     height: 100%;
     padding: 0.5rem;
     flex: 1;
+    box-sizing: border-box;
   }
 
   .canvas.mobile .canvas-paper {
@@ -2516,6 +2549,7 @@
     border-left: none;
     padding: 1rem;
     overflow-y: auto;
+    box-sizing: border-box;
   }
 
   .restaurant-sidebar.mobile .restaurant-info {

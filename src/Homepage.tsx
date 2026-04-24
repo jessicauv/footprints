@@ -16,12 +16,14 @@ const Homepage: React.FC<HomepageProps> = ({ onGoToLogin }) => {
             className="title-card-image"
           />
           <h1 className="title-text-overlay">footprints</h1>
-          <img
-            src="/subtitle-card.png"
-            alt="Subtitle Card"
-            className="subtitle-card-image"
-          />
-          <h2 className="subtitle-card-overlay">Document Your Adventures</h2>
+          <div className="subtitle-wrapper">
+            <img
+              src="/subtitle-card.png"
+              alt="Subtitle Card"
+              className="subtitle-card-image"
+            />
+            <h2 className="subtitle-card-overlay">Document Your Adventures</h2>
+          </div>
         </div>
 
         {/*

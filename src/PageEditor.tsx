@@ -189,6 +189,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
   const [rotationStart, setRotationStart] = useState({ x: 0, y: 0, angle: 0 });
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
+  const lastTapRef = useRef<{ itemId: string; time: number } | null>(null);
+  const onImagesLoadedRef = useRef(onImagesLoaded);
+  useEffect(() => { onImagesLoadedRef.current = onImagesLoaded; }, [onImagesLoaded]);
 
   // Load page content from Firestore
   useEffect(() => {
@@ -224,8 +227,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
           setCanvasItems(items);
 
           // Load existing generated images if available and notify parent
-          if (data.generatedImages && onImagesLoaded) {
-            onImagesLoaded(data.generatedImages);
+          if (data.generatedImages && onImagesLoadedRef.current) {
+            onImagesLoadedRef.current(data.generatedImages);
           }
         } else {
           console.log('No existing page data found');
@@ -238,7 +241,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
     };
 
     loadPageContent();
-  }, [journal.id, pageId, onImagesLoaded]);
+  }, [journal.id, pageId]);
 
   // Save page content to Firestore
   const savePageContent = async (items: DraggableItem[]) => {
@@ -666,6 +669,16 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
 
   // Touch event handlers for mobile/tablet support
   const handleTouchStart = (e: React.TouchEvent, itemId: string) => {
+    // Double-tap to delete — checked before editingTextId guard so it works on text items too
+    const now = Date.now();
+    if (lastTapRef.current && lastTapRef.current.itemId === itemId && now - lastTapRef.current.time < 400) {
+      deleteItem(itemId);
+      lastTapRef.current = null;
+      e.preventDefault();
+      return;
+    }
+    lastTapRef.current = { itemId, time: now };
+
     // Don't start dragging if we're editing text
     if (editingTextId) return;
 
@@ -1291,7 +1304,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
               <div className="page-info-sidebar">
                 <p className="page-number">{pageId}</p>
                 <div className="editor-instructions">
-                  <p>Double-click items to delete them. Drag from sidebar to add.</p>
+                  <p>{isMobile ? 'Double-tap items to delete them. Tap from items bar to add.' : 'Double-click items to delete them. Drag from sidebar to add.'}</p>
                 </div>
                 {/*
                 <div className="sidebar-actions">
@@ -1304,7 +1317,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ journal, pageId, vibes, detaile
                 </div>
                 */}
 
-                <p className="powered-by-yelp" style={{ fontFamily: 'Montserrat, sans-serif', marginTop: '16px' }}>Powered by Yelp AI API</p>
+                <p className="powered-by-yelp" style={{ fontFamily: 'Montserrat, sans-serif', marginTop: '16px', fontWeight: 'bold' }}>Powered by Yelp AI API</p>
               </div>
             </div>
           )}
